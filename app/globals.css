@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #FBFAF7;
+  --ink: #1B1B1A;
+  --rule: #E5E2DA;
+  --muted: #6B6862;
+  --accent: #5A5448;
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Poem text — the load-bearing typographic decision */
+.poem {
+  font-family: 'Source Serif 4', 'Source Serif Pro', Georgia, serif;
+  font-size: 1.1875rem; /* 19px */
+  line-height: 1.85;
+  font-weight: 400;
+  white-space: pre-wrap;
+  color: var(--ink);
+  letter-spacing: 0.005em;
+}
+
+.poem-stanza + .poem-stanza {
+  margin-top: 1.4em;
+}
+
+/* Wordmark */
+.wordmark {
+  font-family: 'Source Serif 4', 'Source Serif Pro', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-feature-settings: "ss01";
+}
+
+/* Chrome (nav, metadata) */
+.chrome {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* Prose (context, interpretation) */
+.prose-literary {
+  font-family: 'Source Serif 4', 'Source Serif Pro', Georgia, serif;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--ink);
+  max-width: 38rem;
+}
+
+.prose-literary p + p { margin-top: 1em; }
+.prose-literary h2 {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 2.5em;
+  margin-bottom: 1em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid var(--rule);
+}
+.prose-literary h3 {
+  font-family: 'Source Serif 4', serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.75em;
+  margin-bottom: 0.5em;
+}
+.prose-literary a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--rule);
+}
+.prose-literary a:hover { text-decoration-color: var(--ink); }
+.prose-literary blockquote {
+  border-left: 2px solid var(--rule);
+  padding-left: 1em;
+  font-style: italic;
+  color: var(--muted);
+  margin: 1.25em 0;
+}
+
+/* Restrained play button */
+.play-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  background: var(--ink);
+  color: var(--paper);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.play-button:hover { background: var(--accent); }
+
+/* Hairlines */
+.hairline { border-top: 1px solid var(--rule); }
+
+/* Selection */
+::selection { background: rgba(27, 27, 26, 0.12); }
