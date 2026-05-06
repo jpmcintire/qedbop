@@ -4,8 +4,8 @@ poet: Robert Frost
 year: 1923
 slug: stopping-by-woods-on-a-snowy-evening
 oneLineSummary: A traveler pauses at the edge of dark woods and almost forgets where he was going.
-musicalSetting: Placeholder — replace with the note on the genre choice and why it serves the poem.
-youtube:
+musicalSetting:
+youtube: https://youtu.be/2t7rQtX6zjk
 spotify:
 appleMusic:
 sunoAudio:
