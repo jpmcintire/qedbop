@@ -9,7 +9,7 @@ export default function AboutPage() {
         <h1 className="font-serif text-4xl mb-8 text-ink">About</h1>
         <div className="prose-literary">
           <p>
-            QED&rsquo;Bop is a catalog of public-domain poems set to music. The
+            qed&rsquo;bop is a catalog of public-domain poems set to music. The
             project is built around a single conviction: the poem comes first.
             The music is one element of an encounter with a poem &mdash; not a
             replacement for reading it, and not a wrapper of pedagogical

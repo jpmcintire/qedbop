@@ -1,6 +1,10 @@
-# QED'Bop
+# qed'bop
 
 A catalog of public-domain poems set to music. The poem comes first.
+
+## Brand
+
+The name is **always written `qed'bop`** — lowercase, with a typographic apostrophe between the two halves. Never capitalize it (no `QED'Bop`, no `Qed'bop`, not even at the start of a sentence). The lowercase form is load-bearing: `q`/`b` and `d`/`p` are visual mirrors, so `qed'bop` reads as a graphic palindrome around the apostrophe. Capitalizing destroys the mirror. In code: `qed&rsquo;bop` in JSX content; `qed'bop` (straight apostrophe) is acceptable in metadata strings, plain text, and URLs.
 
 ## Stack
 
@@ -79,7 +83,7 @@ The markdown body below the frontmatter renders as the *Context* section.
 - Mostly monochrome: cream paper, dark ink, hairline rules
 - No decorative imagery on the poem itself
 - Audio embed is restrained — not styled as a Spotify module
-- Wordmark is serif, not a logo
+- Wordmark is serif, not a logo, and always lowercase (see Brand above)
 
 ## Roadmap
 

@@ -11,7 +11,7 @@ export default async function HomePage() {
           Public-domain poems, set to music.
         </h1>
         <p className="prose-literary">
-          QED&rsquo;Bop is a working catalog of poems from the public domain
+          qed&rsquo;bop is a working catalog of poems from the public domain
           rendered as singable songs. The poem comes first; the music serves
           the literature. Each entry is a place to read the poem, hear it sung,
           and learn what is worth knowing about it.

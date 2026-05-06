@@ -5,13 +5,13 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   metadataBase: new URL('https://qedbop.com'),
   title: {
-    default: "QED'Bop — public-domain poems set to music",
-    template: "%s — QED'Bop",
+    default: "qed'bop — public-domain poems set to music",
+    template: "%s — qed'bop",
   },
   description:
     "A catalog of public-domain poems set to music. The poem comes first; the music serves the literature.",
   openGraph: {
-    siteName: "QED'Bop",
+    siteName: "qed'bop",
     type: 'website',
   },
 };
@@ -35,7 +35,7 @@ export default function RootLayout({
         <header className="border-b border-rule">
           <div className="max-w-page mx-auto px-6 py-5 flex items-baseline justify-between">
             <Link href="/" className="wordmark text-xl text-ink no-underline">
-              QED&rsquo;Bop
+              qed&rsquo;bop
             </Link>
             <nav className="chrome flex gap-6">
               <Link href="/poems" className="hover:text-ink">Catalog</Link>
@@ -46,7 +46,7 @@ export default function RootLayout({
         <main>{children}</main>
         <footer className="hairline mt-24">
           <div className="max-w-page mx-auto px-6 py-8 chrome flex justify-between">
-            <span>QED&rsquo;Bop &middot; Public-domain poems set to music</span>
+            <span>qed&rsquo;bop &middot; Public-domain poems set to music</span>
             <span>&copy; {new Date().getFullYear()}</span>
           </div>
         </footer>
