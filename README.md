@@ -11,7 +11,7 @@ The name is **always written `qed'bop`** — lowercase, with a typographic apost
 - Next.js 15 (App Router) with React 19
 - Tailwind CSS for styling, design tokens for the typographic system
 - Markdown content in `content/poems/`, parsed at build time via `gray-matter` + `remark`
-- Deployed on Vercel; domain `qedbop.com`
+- Deployed on Railway; domain `qedbop.com`
 
 No CMS, no database, no auth. Each poem is a markdown file. The site is statically generated.
 
