@@ -6,14 +6,22 @@ A catalog of public-domain poems set to music. The poem comes first.
 
 The name is **always written `qed'bop`** — lowercase, with a typographic apostrophe between the two halves. Never capitalize it (no `QED'Bop`, no `Qed'bop`, not even at the start of a sentence). The lowercase form is load-bearing: `q`/`b` and `d`/`p` are visual mirrors, so `qed'bop` reads as a graphic palindrome around the apostrophe. Capitalizing destroys the mirror. In code: `qed&rsquo;bop` in JSX content; `qed'bop` (straight apostrophe) is acceptable in metadata strings, plain text, and URLs.
 
+## Two products in one repo
+
+This repo now contains two surfaces that share branding, fonts, and design tokens:
+
+1. **Static catalog** (this README) — anonymous, markdown-driven, statically generated. Lives at `/`, `/poems`, `/about`.
+2. **Teacher platform** — authenticated, Postgres-backed, generates standards-aligned assignments via the Claude API. Lives at `/app`, `/admin`, `/auth`, and serves published student pages at `/a/[slug]`. See **`ARCHITECTURE.md`** for the spec and **`SETUP.md`** for how to run it locally.
+
+The catalog is the public face. The platform is the product.
+
 ## Stack
 
 - Next.js 15 (App Router) with React 19
 - Tailwind CSS for styling, design tokens for the typographic system
-- Markdown content in `content/poems/`, parsed at build time via `gray-matter` + `remark`
+- Markdown content in `content/poems/`, parsed at build time via `gray-matter` + `remark` (static catalog)
+- Postgres + Prisma + Auth.js + Anthropic Claude API (teacher platform)
 - Deployed on Railway; domain `qedbop.com`
-
-No CMS, no database, no auth. Each poem is a markdown file. The site is statically generated.
 
 ## Getting started
 
@@ -32,20 +40,34 @@ Then open http://localhost:3000.
 
 ```
 app/
-  layout.tsx              # site-wide chrome (header, footer, fonts)
-  page.tsx                # homepage with poem list
+  layout.tsx              # minimal root (just html/body + font preconnect)
   globals.css             # design tokens + typographic system
-  poems/
-    page.tsx              # catalog index
-    [slug]/page.tsx       # per-poem template (the load-bearing page)
-  about/page.tsx
+  (catalog)/              # static catalog (route group, no URL prefix)
+    layout.tsx            # wordmark header + footer
+    page.tsx              # homepage
+    about/page.tsx
+    poems/page.tsx        # catalog index
+    poems/[slug]/page.tsx # per-poem template
+  auth/                   # /auth/signin, /auth/signup
+  app/                    # authenticated teacher platform (/app/dashboard, /library, /build, /profile, /published)
+  admin/                  # admin CRUD (/admin/works)
+  a/[slug]/page.tsx       # published student assignment page
+  api/                    # NextAuth, signup, profile, generate, publish, QR, admin
   not-found.tsx
 components/
-  AudioBlock.tsx          # restrained play button + distribution links + YouTube embed
+  AudioBlock.tsx          # restrained play button + distribution links + YouTube embed (catalog)
+  AssignmentRenderer.tsx  # student-facing renderer for /a/[slug]
+  Providers.tsx           # SessionProvider wrapper
 content/
   poems/                  # one markdown file per poem (frontmatter + prose body)
+  standards/              # plain-text ELA standards by framework + grade band
 lib/
-  poems.ts                # markdown loader + stanza splitter
+  poems.ts                # markdown loader + stanza splitter (catalog)
+  prisma.ts auth.ts auth.config.ts auth-handler.ts
+  claude.ts schemas.ts slug.ts standards.ts
+prisma/
+  schema.prisma           # 5 entities + Auth.js tables
+  seed.ts                 # seeds Frost + one Version
 ```
 
 
