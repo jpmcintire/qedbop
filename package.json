@@ -4,10 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "prisma generate && next build",
+    "start": "prisma db push --skip-generate && prisma db seed && next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "next": "^15.5.0",
@@ -15,10 +22,22 @@
     "react-dom": "19.0.0",
     "gray-matter": "4.0.3",
     "remark": "15.0.1",
-    "remark-html": "16.0.1"
+    "remark-html": "16.0.1",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@auth/prisma-adapter": "^2.7.4",
+    "@prisma/client": "^6.2.1",
+    "bcryptjs": "^2.4.3",
+    "nanoid": "^5.0.9",
+    "next-auth": "5.0.0-beta.25",
+    "prisma": "^6.2.1",
+    "qrcode": "^1.5.4",
+    "tsx": "^4.19.2",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "22.10.7",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
     "@tailwindcss/typography": "0.5.16",

@@ -1,0 +1,24 @@
+Common Core State Standards — English Language Arts — Grades 9-10
+Source: corestandards.org. Edit this file in admin to expand.
+
+Reading: Literature
+RL.9-10.1  Cite strong and thorough textual evidence to support analysis of what the text says explicitly as well as inferences drawn from the text.
+RL.9-10.2  Determine a theme or central idea of a text and analyze in detail its development over the course of the text.
+RL.9-10.3  Analyze how complex characters develop over the course of a text, interact with other characters, and advance the plot or develop the theme.
+RL.9-10.4  Determine the meaning of words and phrases as they are used in the text, including figurative and connotative meanings; analyze the cumulative impact of specific word choices on meaning and tone.
+RL.9-10.5  Analyze how an author's choices concerning how to structure a text, order events within it, and manipulate time create such effects as mystery, tension, or surprise.
+RL.9-10.7  Analyze the representation of a subject or a key scene in two different artistic mediums, including what is emphasized or absent in each treatment.
+RL.9-10.9  Analyze how an author draws on and transforms source material in a specific work.
+
+Writing
+W.9-10.1  Write arguments to support claims in an analysis of substantive topics or texts, using valid reasoning and relevant and sufficient evidence.
+W.9-10.2  Write informative/explanatory texts to examine and convey complex ideas, concepts, and information clearly and accurately.
+W.9-10.4  Produce clear and coherent writing in which the development, organization, and style are appropriate to task, purpose, and audience.
+W.9-10.9  Draw evidence from literary or informational texts to support analysis, reflection, and research.
+
+Speaking and Listening
+SL.9-10.1  Initiate and participate effectively in a range of collaborative discussions with diverse partners on grades 9-10 topics, texts, and issues.
+SL.9-10.2  Integrate multiple sources of information presented in diverse media or formats, evaluating the credibility and accuracy of each source.
+
+Language
+L.9-10.5  Demonstrate understanding of figurative language, word relationships, and nuances in word meanings.
