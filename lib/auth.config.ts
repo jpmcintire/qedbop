@@ -12,7 +12,6 @@ export const authConfig = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = (token.uid as string) ?? session.user.id;
-        // @ts-expect-error role is added in JWT
         session.user.role = (token.role as 'TEACHER' | 'ADMIN') ?? 'TEACHER';
       }
       return session;
