@@ -1,28 +1,16 @@
 import NextAuth from 'next-auth';
-import { NextResponse } from 'next/server';
 import { authConfig } from '@/lib/auth.config';
 
-const { auth } = NextAuth(authConfig);
+// The `authorized` callback in auth.config.ts decides which paths require
+// auth. Auth.js handles the redirect to /auth/signin when authorized() is
+// false. Custom redirect logic (e.g., non-admins hitting /admin) can be
+// added by wrapping with auth((req) => {...}) — but Auth.js's default
+// behavior already gives us 99% of what we need.
+export const { auth: middleware } = NextAuth(authConfig);
 
-export default auth((req) => {
-  const { pathname } = req.nextUrl;
-  const isAuthed = !!req.auth?.user?.id;
-  const isAdmin = req.auth?.user?.role === 'ADMIN';
-
-  if (pathname.startsWith('/app') && !isAuthed) {
-    const url = req.nextUrl.clone();
-    url.pathname = '/auth/signin';
-    url.searchParams.set('next', pathname);
-    return NextResponse.redirect(url);
-  }
-  if (pathname.startsWith('/admin') && !isAdmin) {
-    const url = req.nextUrl.clone();
-    url.pathname = isAuthed ? '/app/dashboard' : '/auth/signin';
-    return NextResponse.redirect(url);
-  }
-  return NextResponse.next();
-});
-
+// Match every request EXCEPT Next.js internals, the NextAuth API routes
+// (Auth.js handles those without needing middleware), and static files.
+// Matching everything else lets the authorized callback decide.
 export const config = {
-  matcher: ['/app/:path*', '/admin/:path*'],
+  matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 };
