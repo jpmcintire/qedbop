@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export function GET() {
   return Response.json({
-    version: 'v6-middleware-deleted',
+    version: 'v7-explicit-noop-middleware',
     deployedAt: new Date().toISOString(),
     hasMiddleware: false,
   });
