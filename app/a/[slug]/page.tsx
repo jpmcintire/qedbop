@@ -1,0 +1,107 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { getPoem } from '@/lib/poems';
+
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ v?: string | string[] }>;
+};
+
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const poem = getPoem(slug);
+  if (!poem) return { title: "qed'bop" };
+  return {
+    title: `${poem.title} — qed'bop`,
+    description: `${poem.title} by ${poem.author}, with musical settings.`,
+  };
+}
+
+export default async function ViewerPage({ params, searchParams }: Props) {
+  const { slug } = await params;
+  const { v } = await searchParams;
+
+  const poem = getPoem(slug);
+  if (!poem) notFound();
+
+  const ids = Array.isArray(v) ? v : v ? [v] : [];
+  const versions = ids
+    .map((id) => poem.versions.find((ver) => ver.youtubeId === id))
+    .filter((x): x is NonNullable<typeof x> => !!x);
+
+  if (versions.length === 0) notFound();
+
+  return (
+    <main className="page">
+      <header style={{ marginBottom: '2.5rem' }}>
+        <Link
+          href="/"
+          className="wordmark"
+          style={{ color: 'var(--ink)', fontSize: '1.25rem', textDecoration: 'none' }}
+        >
+          qed&rsquo;bop
+        </Link>
+      </header>
+
+      <article>
+        <h1
+          style={{
+            fontFamily: 'Georgia, "Source Serif Pro", serif',
+            fontSize: '2.5rem',
+            fontWeight: 600,
+            lineHeight: 1.15,
+            margin: 0,
+          }}
+        >
+          {poem.title}
+        </h1>
+        <p className="chrome" style={{ marginTop: '0.5rem' }}>
+          {poem.author} &middot; {poem.year}
+        </p>
+
+        <section style={{ marginTop: '2.5rem', maxWidth: '38rem' }}>
+          <pre className="poem">{poem.text}</pre>
+        </section>
+
+        <section style={{ marginTop: '3rem' }}>
+          <p className="chrome" style={{ marginBottom: '1rem' }}>Listen</p>
+          <div
+            style={{
+              display: 'grid',
+              gap: '1.5rem',
+              gridTemplateColumns: versions.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))',
+            }}
+          >
+            {versions.map((ver) => (
+              <div key={ver.youtubeId}>
+                <p className="chrome" style={{ marginBottom: '0.5rem' }}>{ver.label}</p>
+                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${ver.youtubeId}`}
+                    title={`${poem.title} — ${ver.label}`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 0,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
+          <p className="chrome">
+            Built with qed&rsquo;bop &middot; <Link href="/" style={{ color: 'inherit' }}>make your own</Link>
+          </p>
+        </footer>
+      </article>
+    </main>
+  );
+}
