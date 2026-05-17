@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getPoem, audienceLabel } from '@/lib/poems';
+import { getPoem, audienceLabel, type Poem, type Version } from '@/lib/poems';
+import { generateQuestions } from '@/lib/generate-questions';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -37,7 +39,7 @@ export default async function ViewerPage({ params, searchParams }: Props) {
 
   const audience = audienceLabel(search.audience);
   const requestedQuestions = Math.max(0, parseInt(search.q ?? '0', 10) || 0);
-  const questions = poem.questions.slice(0, requestedQuestions);
+  const audienceSlug = search.audience || '';
 
   return (
     <main className="page">
@@ -53,10 +55,7 @@ export default async function ViewerPage({ params, searchParams }: Props) {
 
       <article>
         {audience && (
-          <p
-            className="chrome"
-            style={{ marginBottom: '0.5rem' }}
-          >
+          <p className="chrome" style={{ marginBottom: '0.5rem' }}>
             For {audience}
           </p>
         )}
@@ -114,36 +113,16 @@ export default async function ViewerPage({ params, searchParams }: Props) {
           </div>
         </section>
 
-        {questions.length > 0 && (
-          <section style={{ marginTop: '3rem', maxWidth: '38rem' }}>
-            <p className="chrome" style={{ marginBottom: '1rem' }}>Discussion</p>
-            <p
-              style={{
-                color: 'var(--muted)',
-                fontSize: '0.875rem',
-                marginBottom: '1.25rem',
-                fontStyle: 'italic',
-              }}
-            >
-              Strong responses describe specific moments in the music.
-              &ldquo;The song felt sad&rdquo; is not enough.
-            </p>
-            <ol
-              style={{
-                fontFamily: 'Georgia, "Source Serif Pro", serif',
-                fontSize: '1.0625rem',
-                lineHeight: 1.7,
-                paddingLeft: '1.5rem',
-                margin: 0,
-              }}
-            >
-              {questions.map((q, i) => (
-                <li key={i} style={{ marginBottom: '1rem' }}>
-                  {q}
-                </li>
-              ))}
-            </ol>
-          </section>
+        {requestedQuestions > 0 && audienceSlug && (
+          <Suspense fallback={<QuestionsLoading count={requestedQuestions} audience={audience} />}>
+            <Questions
+              poem={poem}
+              versions={versions}
+              audienceSlug={audienceSlug}
+              audienceLabel={audience}
+              count={requestedQuestions}
+            />
+          </Suspense>
         )}
 
         <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
@@ -154,5 +133,102 @@ export default async function ViewerPage({ params, searchParams }: Props) {
         </footer>
       </article>
     </main>
+  );
+}
+
+async function Questions({
+  poem,
+  versions,
+  audienceSlug,
+  audienceLabel,
+  count,
+}: {
+  poem: Poem;
+  versions: Version[];
+  audienceSlug: string;
+  audienceLabel?: string;
+  count: number;
+}) {
+  const { questions, source } = await generateQuestions(
+    {
+      slug: poem.slug,
+      audience: audienceSlug,
+      count,
+      versionLabels: versions.map((v) => v.label),
+    },
+    poem
+  );
+
+  return (
+    <section style={{ marginTop: '3rem', maxWidth: '38rem' }}>
+      <p className="chrome" style={{ marginBottom: '0.5rem' }}>Discussion</p>
+      <p
+        style={{
+          color: 'var(--muted)',
+          fontSize: '0.8125rem',
+          marginBottom: '0.5rem',
+          fontStyle: 'italic',
+        }}
+      >
+        {source === 'ai' ? (
+          <>Generated for {audienceLabel ?? 'this audience'} by Claude Opus 4.7.</>
+        ) : (
+          <>Starter questions (AI generation unavailable).</>
+        )}
+      </p>
+      <p
+        style={{
+          color: 'var(--muted)',
+          fontSize: '0.875rem',
+          marginBottom: '1.25rem',
+          fontStyle: 'italic',
+        }}
+      >
+        Strong responses describe specific moments in the music.
+        &ldquo;The song felt sad&rdquo; is not enough.
+      </p>
+      <ol
+        style={{
+          fontFamily: 'Georgia, "Source Serif Pro", serif',
+          fontSize: '1.0625rem',
+          lineHeight: 1.7,
+          paddingLeft: '1.5rem',
+          margin: 0,
+        }}
+      >
+        {questions.map((q, i) => (
+          <li key={i} style={{ marginBottom: '1rem' }}>
+            {q}
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function QuestionsLoading({ count, audience }: { count: number; audience?: string }) {
+  return (
+    <section style={{ marginTop: '3rem', maxWidth: '38rem' }}>
+      <p className="chrome" style={{ marginBottom: '0.5rem' }}>Discussion</p>
+      <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', fontStyle: 'italic' }}>
+        Generating {count} question{count === 1 ? '' : 's'}
+        {audience ? ` for ${audience}` : ''} with Claude Opus 4.7&hellip;
+      </p>
+      <div style={{ marginTop: '1.25rem' }}>
+        {Array.from({ length: count }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              height: '1rem',
+              background: 'var(--rule)',
+              borderRadius: '0.25rem',
+              marginBottom: '0.75rem',
+              width: `${85 - (i % 3) * 15}%`,
+              opacity: 0.5,
+            }}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
