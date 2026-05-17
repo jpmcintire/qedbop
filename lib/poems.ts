@@ -106,7 +106,6 @@ export const AUDIENCES = [
   { value: 'high-school', label: 'High school' },
   { value: 'college', label: 'College' },
   { value: 'post-graduate', label: 'Post-graduate' },
-  { value: 'self-education', label: 'Self-education' },
 ] as const;
 
 export type AudienceValue = (typeof AUDIENCES)[number]['value'];

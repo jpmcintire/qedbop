@@ -99,21 +99,36 @@ export default function BuilderPage() {
             </div>
           }
         >
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.75rem' }}>
+          <ul
+            style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: 0,
+              display: 'grid',
+              gap: '1rem',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            }}
+          >
             {poem.versions.map((v) => {
               const isPicked = picked.includes(v.youtubeId);
               return (
-                <li key={v.youtubeId}>
+                <li
+                  key={v.youtubeId}
+                  style={{
+                    border: `1px solid ${isPicked ? 'var(--ink)' : 'var(--rule)'}`,
+                    borderRadius: '0.5rem',
+                    background: isPicked ? 'rgba(27,27,26,0.04)' : 'transparent',
+                    overflow: 'hidden',
+                  }}
+                >
                   <label
                     style={{
                       display: 'flex',
                       gap: '0.75rem',
                       alignItems: 'center',
                       padding: '0.75rem 1rem',
-                      border: `1px solid ${isPicked ? 'var(--ink)' : 'var(--rule)'}`,
-                      borderRadius: '0.5rem',
                       cursor: 'pointer',
-                      background: isPicked ? 'rgba(27,27,26,0.04)' : 'transparent',
+                      borderBottom: '1px solid var(--rule)',
                     }}
                   >
                     <input
@@ -121,15 +136,32 @@ export default function BuilderPage() {
                       checked={isPicked}
                       onChange={() => togglePick(v.youtubeId)}
                     />
-                    <span style={{ flex: 1 }}>
+                    <span style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                       <span style={{ fontFamily: 'Georgia, serif', fontSize: '1.0625rem' }}>
                         {v.label}
                       </span>
-                      <span className="chrome" style={{ marginLeft: '0.75rem' }}>
+                      <span className="chrome" style={{ marginTop: '0.125rem' }}>
                         youtu.be/{v.youtubeId}
                       </span>
                     </span>
                   </label>
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${v.youtubeId}`}
+                      title={`${poem.title} — ${v.label}`}
+                      loading="lazy"
+                      allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 0,
+                      }}
+                    />
+                  </div>
                 </li>
               );
             })}
