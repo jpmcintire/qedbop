@@ -1,10 +1,14 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getPoem } from '@/lib/poems';
+import { getPoem, audienceLabel } from '@/lib/poems';
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ v?: string | string[] }>;
+  searchParams: Promise<{
+    v?: string | string[];
+    audience?: string;
+    q?: string;
+  }>;
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -19,17 +23,21 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function ViewerPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const { v } = await searchParams;
+  const search = await searchParams;
 
   const poem = getPoem(slug);
   if (!poem) notFound();
 
-  const ids = Array.isArray(v) ? v : v ? [v] : [];
+  const ids = Array.isArray(search.v) ? search.v : search.v ? [search.v] : [];
   const versions = ids
     .map((id) => poem.versions.find((ver) => ver.youtubeId === id))
     .filter((x): x is NonNullable<typeof x> => !!x);
 
   if (versions.length === 0) notFound();
+
+  const audience = audienceLabel(search.audience);
+  const requestedQuestions = Math.max(0, parseInt(search.q ?? '0', 10) || 0);
+  const questions = poem.questions.slice(0, requestedQuestions);
 
   return (
     <main className="page">
@@ -44,6 +52,15 @@ export default async function ViewerPage({ params, searchParams }: Props) {
       </header>
 
       <article>
+        {audience && (
+          <p
+            className="chrome"
+            style={{ marginBottom: '0.5rem' }}
+          >
+            For {audience}
+          </p>
+        )}
+
         <h1
           style={{
             fontFamily: 'Georgia, "Source Serif Pro", serif',
@@ -69,7 +86,8 @@ export default async function ViewerPage({ params, searchParams }: Props) {
             style={{
               display: 'grid',
               gap: '1.5rem',
-              gridTemplateColumns: versions.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))',
+              gridTemplateColumns:
+                versions.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))',
             }}
           >
             {versions.map((ver) => (
@@ -96,9 +114,42 @@ export default async function ViewerPage({ params, searchParams }: Props) {
           </div>
         </section>
 
+        {questions.length > 0 && (
+          <section style={{ marginTop: '3rem', maxWidth: '38rem' }}>
+            <p className="chrome" style={{ marginBottom: '1rem' }}>Discussion</p>
+            <p
+              style={{
+                color: 'var(--muted)',
+                fontSize: '0.875rem',
+                marginBottom: '1.25rem',
+                fontStyle: 'italic',
+              }}
+            >
+              Strong responses describe specific moments in the music.
+              &ldquo;The song felt sad&rdquo; is not enough.
+            </p>
+            <ol
+              style={{
+                fontFamily: 'Georgia, "Source Serif Pro", serif',
+                fontSize: '1.0625rem',
+                lineHeight: 1.7,
+                paddingLeft: '1.5rem',
+                margin: 0,
+              }}
+            >
+              {questions.map((q, i) => (
+                <li key={i} style={{ marginBottom: '1rem' }}>
+                  {q}
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
         <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
           <p className="chrome">
-            Built with qed&rsquo;bop &middot; <Link href="/" style={{ color: 'inherit' }}>make your own</Link>
+            Built with qed&rsquo;bop &middot;{' '}
+            <Link href="/" style={{ color: 'inherit' }}>make your own</Link>
           </p>
         </footer>
       </article>
