@@ -1,18 +1,8 @@
 import type { Metadata } from 'next';
-import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://qedbop.com'),
-  title: {
-    default: "qed'bop — public-domain poems set to music",
-    template: "%s — qed'bop",
-  },
-  description:
-    "A catalog of public-domain poems set to music. The poem comes first; the music serves the literature.",
-  openGraph: {
-    siteName: "qed'bop",
-    type: 'website',
-  },
+  title: "qed'bop",
+  description: "Public-domain poems set to music.",
 };
 
 export default function RootLayout({
@@ -22,15 +12,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>{children}</body>
+      <body
+        style={{
+          margin: 0,
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          background: '#FBFAF7',
+          color: '#1B1B1A',
+        }}
+      >
+        {children}
+      </body>
     </html>
   );
 }
