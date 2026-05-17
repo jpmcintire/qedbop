@@ -2,15 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { POEMS, AUDIENCES, type AudienceValue } from '@/lib/poems';
+import { POEMS, AUDIENCES } from '@/lib/poems';
 
 export default function BuilderPage() {
   const [slug, setSlug] = useState<string>(POEMS[0]?.slug ?? '');
   const [picked, setPicked] = useState<string[]>([]);
-  const [audience, setAudience] = useState<AudienceValue>(AUDIENCES[1].value); // default to high-school
   const [includeQuestions, setIncludeQuestions] = useState(false);
-  const [questionCount, setQuestionCount] = useState(3);
-  const [copied, setCopied] = useState(false);
+  const [questionCount, setQuestionCount] = useState(4);
 
   const poem = useMemo(() => POEMS.find((p) => p.slug === slug), [slug]);
   const maxQuestions = poem?.questions.length ?? 0;
@@ -19,11 +17,9 @@ export default function BuilderPage() {
   function chooseDifferentPoem(newSlug: string) {
     setSlug(newSlug);
     setPicked([]);
-    setCopied(false);
   }
 
   function togglePick(youtubeId: string) {
-    setCopied(false);
     setPicked((prev) =>
       prev.includes(youtubeId) ? prev.filter((v) => v !== youtubeId) : [...prev, youtubeId]
     );
@@ -31,34 +27,24 @@ export default function BuilderPage() {
 
   function selectAll() {
     if (!poem) return;
-    setCopied(false);
     setPicked(poem.versions.map((v) => v.youtubeId));
   }
 
   function clearAll() {
-    setCopied(false);
     setPicked([]);
   }
 
   const ready = picked.length >= 1 && poem != null;
-  const params = new URLSearchParams();
-  picked.forEach((id) => params.append('v', id));
-  if (ready) params.set('audience', audience);
-  if (ready && includeQuestions && effectiveQuestionCount > 0) {
-    params.set('q', String(effectiveQuestionCount));
-  }
-  const relativeUrl = ready && poem ? `/a/${poem.slug}?${params.toString()}` : '';
-  const fullUrl =
-    ready && typeof window !== 'undefined' ? `${window.location.origin}${relativeUrl}` : '';
 
-  async function copyToClipboard() {
-    if (!fullUrl) return;
-    try {
-      await navigator.clipboard.writeText(fullUrl);
-      setCopied(true);
-    } catch {
-      // ignore
+  function buildUrl(audienceSlug?: string): string {
+    if (!ready || !poem) return '';
+    const params = new URLSearchParams();
+    picked.forEach((id) => params.append('v', id));
+    if (audienceSlug) params.set('audience', audienceSlug);
+    if (includeQuestions && effectiveQuestionCount > 0 && audienceSlug) {
+      params.set('q', String(effectiveQuestionCount));
     }
+    return `/a/${poem.slug}?${params.toString()}`;
   }
 
   return (
@@ -151,44 +137,15 @@ export default function BuilderPage() {
         </Step>
       )}
 
-      <Step n={3} title="Audience">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-          {AUDIENCES.map((a) => {
-            const isSelected = audience === a.value;
-            return (
-              <button
-                key={a.value}
-                type="button"
-                onClick={() => {
-                  setAudience(a.value);
-                  setCopied(false);
-                }}
-                style={{
-                  ...chipStyle,
-                  background: isSelected ? 'var(--ink)' : 'transparent',
-                  color: isSelected ? 'var(--paper)' : 'var(--ink)',
-                  borderColor: isSelected ? 'var(--ink)' : 'var(--rule)',
-                }}
-              >
-                {a.label}
-              </button>
-            );
-          })}
-        </div>
-      </Step>
-
-      <Step n={4} title="Discussion questions">
+      <Step n={3} title="Discussion questions">
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}>
           <input
             type="checkbox"
             checked={includeQuestions}
-            onChange={(e) => {
-              setIncludeQuestions(e.target.checked);
-              setCopied(false);
-            }}
+            onChange={(e) => setIncludeQuestions(e.target.checked)}
           />
           <span style={{ fontSize: '1.0625rem' }}>
-            Include discussion questions on the assignment page
+            Include AI-generated discussion questions on the assignment page
           </span>
         </label>
         {includeQuestions && (
@@ -203,10 +160,7 @@ export default function BuilderPage() {
                   <button
                     key={n}
                     type="button"
-                    onClick={() => {
-                      setQuestionCount(n);
-                      setCopied(false);
-                    }}
+                    onClick={() => setQuestionCount(n)}
                     style={{
                       ...chipStyle,
                       background: isSelected ? 'var(--ink)' : 'transparent',
@@ -220,49 +174,104 @@ export default function BuilderPage() {
                 );
               })}
             </div>
+            <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', marginTop: '0.75rem', maxWidth: '38rem' }}>
+              Each audience level gets its own URL below. Same poem, same videos — Claude tunes the
+              questions for the audience. Open multiple to compare.
+            </p>
           </div>
         )}
       </Step>
 
       <section className="hairline" style={{ paddingTop: '1.5rem', marginTop: '2rem' }}>
-        <p className="chrome" style={{ marginBottom: '0.75rem' }}>Shareable URL</p>
-        {ready ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '38rem' }}>
-            <code
-              style={{
-                display: 'block',
-                padding: '0.75rem 1rem',
-                background: '#F2EFE7',
-                borderRadius: '0.375rem',
-                fontSize: '0.875rem',
-                wordBreak: 'break-all',
-              }}
-            >
-              {fullUrl || relativeUrl}
-            </code>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" className="btn" onClick={copyToClipboard}>
-                {copied ? 'Copied' : 'Copy URL'}
-              </button>
-              <a
-                className="btn btn-ghost"
-                href={relativeUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{ textDecoration: 'none', display: 'inline-block' }}
-              >
-                Open preview
-              </a>
-            </div>
-          </div>
-        ) : (
+        <p className="chrome" style={{ marginBottom: '0.75rem' }}>
+          {includeQuestions ? 'Shareable URLs by audience' : 'Shareable URL'}
+        </p>
+
+        {!ready ? (
           <p style={{ color: 'var(--muted)', maxWidth: '38rem' }}>
-            Pick at least one musical version above. The audience selection and discussion-question
-            options will be encoded into the shareable URL.
+            Pick at least one musical version above.
           </p>
+        ) : includeQuestions ? (
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.75rem', maxWidth: '46rem' }}>
+            {AUDIENCES.map((a) => (
+              <UrlRow key={a.value} label={a.label} relativeUrl={buildUrl(a.value)} />
+            ))}
+          </ul>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxWidth: '46rem' }}>
+            <UrlRow label="Assignment" relativeUrl={buildUrl()} />
+          </ul>
         )}
       </section>
     </main>
+  );
+}
+
+function UrlRow({ label, relativeUrl }: { label: string; relativeUrl: string }) {
+  const [copied, setCopied] = useState(false);
+  const fullUrl =
+    typeof window !== 'undefined' ? `${window.location.origin}${relativeUrl}` : relativeUrl;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <li
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '10rem 1fr auto',
+        gap: '0.75rem',
+        alignItems: 'center',
+        padding: '0.75rem 1rem',
+        border: '1px solid var(--rule)',
+        borderRadius: '0.5rem',
+      }}
+    >
+      <span style={{ fontFamily: 'Georgia, serif', fontSize: '1rem' }}>{label}</span>
+      <code
+        style={{
+          fontSize: '0.75rem',
+          color: 'var(--muted)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+        title={fullUrl}
+      >
+        {relativeUrl}
+      </code>
+      <div style={{ display: 'flex', gap: '0.375rem' }}>
+        <button
+          type="button"
+          onClick={copy}
+          className="btn btn-ghost"
+          style={{ fontSize: '0.75rem', padding: '0.375rem 0.875rem' }}
+        >
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+        <a
+          href={relativeUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="btn"
+          style={{
+            fontSize: '0.75rem',
+            padding: '0.375rem 0.875rem',
+            textDecoration: 'none',
+            display: 'inline-block',
+          }}
+        >
+          Open ↗
+        </a>
+      </div>
+    </li>
   );
 }
 
