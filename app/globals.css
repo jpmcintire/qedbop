@@ -1,0 +1,82 @@
+:root {
+  --paper: #FBFAF7;
+  --ink: #1B1B1A;
+  --rule: #E5E2DA;
+  --muted: #6B6862;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.wordmark {
+  font-family: Georgia, "Source Serif Pro", serif;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.chrome {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.poem {
+  font-family: Georgia, "Source Serif Pro", serif;
+  font-size: 1.1875rem;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  letter-spacing: 0.005em;
+}
+
+.page {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.btn {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--rule);
+}
+
+.hairline {
+  border-top: 1px solid var(--rule);
+}
+
+::selection {
+  background: rgba(27, 27, 26, 0.12);
+}
