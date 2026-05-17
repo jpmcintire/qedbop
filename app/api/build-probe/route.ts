@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export function GET() {
   return Response.json({
-    version: 'v8-clean-build',
+    version: 'v9-distdir-bypass',
     deployedAt: new Date().toISOString(),
     hasMiddleware: false,
   });
