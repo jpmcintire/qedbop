@@ -9,6 +9,7 @@ import {
 import {
   generateTeacherEdition as _generateTeacherEdition,
   type TeacherEdition,
+  type TeacherEditionOverrides,
 } from '@/lib/generate-teacher-edition';
 import { askTeacher as _askTeacher, type ChatMessage } from '@/lib/teacher-ask';
 
@@ -93,11 +94,13 @@ export async function fetchTeacherEdition({
   versionIds,
   audience,
   questions,
+  overrides,
 }: {
   slug: string;
   versionIds: string[];
   audience: string;
   questions: string[];
+  overrides?: TeacherEditionOverrides;
 }): Promise<TeacherEdition | null> {
   const poem = getPoem(slug);
   if (!poem) return null;
@@ -110,7 +113,8 @@ export async function fetchTeacherEdition({
     poem,
     audience,
     versions.map((v) => v.label),
-    questions
+    questions,
+    overrides,
   );
 }
 

@@ -3,8 +3,13 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPoem, audienceLabel, lengthLabel } from '@/lib/poems';
 import { isExpired, formatExpirationFriendly } from '@/lib/expiration';
-import { generateTeacherEdition, type TeacherEdition } from '@/lib/generate-teacher-edition';
+import {
+  generateTeacherEdition,
+  type TeacherEdition,
+  type TeacherEditionOverrides,
+} from '@/lib/generate-teacher-edition';
 import { TeacherAsk } from './TeacherAsk';
+import { ProControls } from './ProControls';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -14,6 +19,10 @@ type Props = {
     q?: string | string[];
     exp?: string;
     len?: string | string[];
+    tmode?: string;
+    agendamin?: string;
+    biodepth?: string;
+    contextdepth?: string;
   }>;
 };
 
@@ -71,9 +80,29 @@ export default async function TeacherPage({ params, searchParams }: Props) {
     ].map(([k, v]) => [k, v]),
   ).toString()}`;
 
+  // Pro mode + overrides. Pro is opt-in; in Basic mode the controls are
+  // hidden and overrides are ignored (default-depth bio/context, AI-picked
+  // agenda length).
+  const isPro = search.tmode === 'pro';
+  const agendaMinutes =
+    isPro && search.agendamin
+      ? Math.min(180, Math.max(15, parseInt(search.agendamin, 10) || 0)) || undefined
+      : undefined;
+  const bioDepth: 'short' | 'expanded' =
+    isPro && search.biodepth === 'expanded' ? 'expanded' : 'short';
+  const contextDepth: 'short' | 'expanded' =
+    isPro && search.contextdepth === 'expanded' ? 'expanded' : 'short';
+  const overrides: TeacherEditionOverrides = { agendaMinutes, bioDepth, contextDepth };
+
   return (
     <main className="page">
-      <TeacherHeader studentUrl={studentUrl} expiresOn={expiresOn} />
+      <TeacherHeader studentUrl={studentUrl} expiresOn={expiresOn} isPro={isPro} />
+      <ProControls
+        isPro={isPro}
+        agendaMinutes={agendaMinutes}
+        bioDepth={bioDepth}
+        contextDepth={contextDepth}
+      />
 
       <article>
         {audience && (
@@ -103,6 +132,7 @@ export default async function TeacherPage({ params, searchParams }: Props) {
             audience={audienceSlug}
             versionIds={videoIds}
             questions={questions}
+            overrides={overrides}
           />
         </Suspense>
 
@@ -153,6 +183,7 @@ export default async function TeacherPage({ params, searchParams }: Props) {
               versionIds={videoIds}
               questions={questions}
               lengthLabels={lengthLabels}
+              overrides={overrides}
             />
           </Suspense>
         )}
@@ -178,9 +209,11 @@ export default async function TeacherPage({ params, searchParams }: Props) {
 function TeacherHeader({
   studentUrl,
   expiresOn,
+  isPro,
 }: {
   studentUrl: string;
   expiresOn: string | null;
+  isPro: boolean;
 }) {
   return (
     <header
@@ -207,7 +240,7 @@ function TeacherHeader({
             qed&rsquo;bop
           </Link>
           <p className="chrome" style={{ marginTop: '0.25rem' }}>
-            Teacher edition
+            Teacher edition {isPro ? '— Pro' : '— Basic'}
           </p>
         </div>
         <a
@@ -229,11 +262,13 @@ async function TeacherSections({
   audience,
   versionIds,
   questions,
+  overrides,
 }: {
   slug: string;
   audience: string;
   versionIds: string[];
   questions: string[];
+  overrides: TeacherEditionOverrides;
 }) {
   const poem = getPoem(slug);
   if (!poem) return null;
@@ -246,6 +281,7 @@ async function TeacherSections({
     audience,
     versions.map((v) => v.label),
     questions,
+    overrides,
   );
 
   if (!edition) return null;
@@ -328,12 +364,14 @@ async function QuestionsWithCommentary({
   versionIds,
   questions,
   lengthLabels,
+  overrides,
 }: {
   slug: string;
   audience: string;
   versionIds: string[];
   questions: string[];
   lengthLabels: string[];
+  overrides: TeacherEditionOverrides;
 }) {
   const poem = getPoem(slug);
   if (!poem) return null;
@@ -346,10 +384,11 @@ async function QuestionsWithCommentary({
     audience,
     versions.map((v) => v.label),
     questions,
+    overrides,
   );
 
   return (
-    <section style={{ marginTop: '3rem', maxWidth: '46rem' }}>
+    <section style={{ marginTop: '3rem' }}>
       <p className="chrome" style={{ marginBottom: '0.5rem' }}>Discussion questions</p>
       {lengthLabels.length > 0 && (
         <p
@@ -416,7 +455,7 @@ async function QuestionsWithCommentary({
 
 function TeacherSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <section style={{ marginTop: '2.5rem', maxWidth: '38rem' }}>
+    <section style={{ marginTop: '2.5rem' }}>
       <p className="chrome" style={{ marginBottom: '0.75rem' }}>{label}</p>
       {children}
     </section>
@@ -425,7 +464,7 @@ function TeacherSection({ label, children }: { label: string; children: React.Re
 
 function TeacherSectionsLoading() {
   return (
-    <div style={{ marginTop: '2.5rem', maxWidth: '38rem' }}>
+    <div style={{ marginTop: '2.5rem' }}>
       <p className="chrome" style={{ marginBottom: '0.5rem' }}>
         Generating teacher-edition content with Claude Opus 4.7&hellip;
       </p>
@@ -454,7 +493,7 @@ function QuestionCommentaryLoading({
   lengthLabels: string[];
 }) {
   return (
-    <section style={{ marginTop: '3rem', maxWidth: '46rem' }}>
+    <section style={{ marginTop: '3rem' }}>
       <p className="chrome" style={{ marginBottom: '0.5rem' }}>Discussion questions</p>
       {lengthLabels.length > 0 && (
         <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>

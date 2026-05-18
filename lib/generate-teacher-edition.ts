@@ -42,11 +42,18 @@ const AUDIENCE_LABEL: Record<string, string> = {
   'post-graduate': 'graduate / scholarly',
 };
 
+export type TeacherEditionOverrides = {
+  agendaMinutes?: number; // target total agenda time (e.g. 45, 60)
+  bioDepth?: 'short' | 'expanded';
+  contextDepth?: 'short' | 'expanded';
+};
+
 async function _generate(
   poem: Poem,
   audience: string,
   versionLabels: string[],
-  questions: string[]
+  questions: string[],
+  overrides: TeacherEditionOverrides = {},
 ): Promise<TeacherEdition | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
@@ -58,6 +65,20 @@ async function _generate(
     versionLabels.length > 1
       ? `Students will listen to ${versionLabels.length} different musical settings (${versionLabels.join(' and ')}).`
       : `Students will listen to one musical setting of the poem.`;
+
+  const agendaTarget = overrides.agendaMinutes
+    ? `Target a TOTAL agenda time of approximately ${overrides.agendaMinutes} minutes (give or take 5). Distribute time across activities accordingly.`
+    : `Target a TOTAL agenda time somewhere between 30 and 90 minutes — pick what feels right for the audience and the depth of the assignment.`;
+
+  const bioInstruction =
+    overrides.bioDepth === 'expanded'
+      ? 'POET BIO: 2-3 paragraphs. Include biographical detail, intellectual context, and reception. Still focused on aspects relevant to teaching this poem; not a generic encyclopedia entry, but go deeper than a paragraph.'
+      : 'POET BIO: 1-2 paragraphs. Concise, focused on aspects relevant to teaching THIS poem.';
+
+  const contextInstruction =
+    overrides.contextDepth === 'expanded'
+      ? 'HISTORICAL CONTEXT: 2-3 paragraphs. Cover the poem\'s historical moment, the cultural setting of the musical adaptation(s), and any meaningful interpretive or reception history.'
+      : 'HISTORICAL CONTEXT: 1-2 paragraphs. Cover the poem\'s moment and (briefly) the cultural setting of the musical adaptation(s).';
 
   const userPrompt = `# Poem
 ${poem.title} — ${poem.author} (${poem.year})
@@ -75,6 +96,15 @@ ${versionsLine}
 # Questions in the assignment (in order)
 ${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 
+# Section-specific instructions
+${bioInstruction}
+
+${contextInstruction}
+
+CLASS AGENDA: ${agendaTarget}
+
+QUESTION COMMENTARY: For each numbered question above, in order, one short paragraph for the teacher explaining what the question is exploring and what to listen for in strong vs. weak student responses.
+
 # Required output
 Return JSON exactly matching this shape:
 
@@ -84,7 +114,7 @@ Return JSON exactly matching this shape:
   "classAgenda": [
     {"minutes": 5, "activity": "Students read the poem silently."},
     {"minutes": 10, "activity": "Listen to the first musical setting in full, taking notes on instrumentation and mood."}
-    // 3 to 12 entries; total in the 30-90 minute range
+    // 3 to 12 entries; totals roughly match the target time above
   ],
   "questionCommentary": [
     "Commentary for question 1: what it explores and what to listen for in answers.",
@@ -132,12 +162,21 @@ export async function generateTeacherEdition(
   poem: Poem,
   audience: string,
   versionLabels: string[],
-  questions: string[]
+  questions: string[],
+  overrides: TeacherEditionOverrides = {},
 ): Promise<TeacherEdition | null> {
-  const cacheKey = [poem.slug, audience, String(versionLabels.length), ...questions].join('|');
+  const cacheKey = [
+    poem.slug,
+    audience,
+    String(versionLabels.length),
+    overrides.agendaMinutes ? `am=${overrides.agendaMinutes}` : 'am=auto',
+    `bd=${overrides.bioDepth ?? 'short'}`,
+    `cd=${overrides.contextDepth ?? 'short'}`,
+    ...questions,
+  ].join('|');
   const cached = unstable_cache(
-    () => _generate(poem, audience, versionLabels, questions),
-    ['teacher-edition-v1', cacheKey],
+    () => _generate(poem, audience, versionLabels, questions, overrides),
+    ['teacher-edition-v2', cacheKey],
     { revalidate: 60 * 60 * 24 * 7, tags: ['teacher-edition'] }
   );
   return cached();
