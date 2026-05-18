@@ -279,7 +279,7 @@ async function TeacherSections({
   const edition: TeacherEdition | null = await generateTeacherEdition(
     poem,
     audience,
-    versions.map((v) => v.label),
+    versions,
     questions,
     overrides,
   );
@@ -382,7 +382,7 @@ async function QuestionsWithCommentary({
   const edition: TeacherEdition | null = await generateTeacherEdition(
     poem,
     audience,
-    versions.map((v) => v.label),
+    versions,
     questions,
     overrides,
   );
