@@ -6,6 +6,10 @@ import {
   generateQuestions as _generateQuestions,
   generateSingleQuestion as _generateSingleQuestion,
 } from '@/lib/generate-questions';
+import {
+  generateTeacherEdition as _generateTeacherEdition,
+  type TeacherEdition,
+} from '@/lib/generate-teacher-edition';
 
 export async function fetchTopicOptions(
   slug: string,
@@ -80,5 +84,31 @@ export async function fetchSingleQuestion({
       instruction,
     },
     poem
+  );
+}
+
+export async function fetchTeacherEdition({
+  slug,
+  versionIds,
+  audience,
+  questions,
+}: {
+  slug: string;
+  versionIds: string[];
+  audience: string;
+  questions: string[];
+}): Promise<TeacherEdition | null> {
+  const poem = getPoem(slug);
+  if (!poem) return null;
+
+  const versions = versionIds
+    .map((id) => poem.versions.find((v) => v.youtubeId === id))
+    .filter((v): v is NonNullable<typeof v> => !!v);
+
+  return _generateTeacherEdition(
+    poem,
+    audience,
+    versions.map((v) => v.label),
+    questions
   );
 }

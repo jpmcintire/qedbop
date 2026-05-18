@@ -8,6 +8,7 @@ type Props = {
   error: string | null;
   onGenerate: () => void;
   studentUrl: string;
+  teacherUrl: string;
   expiration: string;
 };
 
@@ -20,6 +21,7 @@ export function QuickGenerate({
   error,
   onGenerate,
   studentUrl,
+  teacherUrl,
   expiration,
 }: Props) {
   return (
@@ -47,13 +49,20 @@ export function QuickGenerate({
       )}
 
       {hasResult && studentUrl && (
-        <div style={{ marginTop: '1.5rem' }}>
+        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <UrlBlock
             label="Share with students"
             description={`Send this to students. Read-only, expires ${formatExpirationFriendly(expiration)}. To tweak topics, questions, or expiration date, switch to Custom mode at the top.`}
             relativeUrl={studentUrl}
             accent
           />
+          {teacherUrl && (
+            <UrlBlock
+              label="Teacher edition"
+              description="A supplementary page just for you, with poet bio, historical context, a suggested class agenda, and per-question teaching commentary. First load takes ~15s while Claude generates."
+              relativeUrl={teacherUrl}
+            />
+          )}
         </div>
       )}
     </section>
