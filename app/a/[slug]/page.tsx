@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPoem, audienceLabel } from '@/lib/poems';
+import { isExpired, formatExpirationFriendly } from '@/lib/expiration';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -8,6 +9,7 @@ type Props = {
     v?: string | string[];
     audience?: string;
     q?: string | string[];
+    exp?: string;
   }>;
 };
 
@@ -18,6 +20,7 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: `${poem.title} — qed'bop`,
     description: `${poem.title} by ${poem.author}, with musical settings.`,
+    robots: { index: false, follow: false },
   };
 }
 
@@ -27,6 +30,57 @@ export default async function ViewerPage({ params, searchParams }: Props) {
 
   const poem = getPoem(slug);
   if (!poem) notFound();
+
+  // Expiration is checked before anything else — if the link has expired,
+  // show the expired page instead of the assignment. Missing exp param
+  // counts as "no expiration" (back-compat with older URLs).
+  if (isExpired(search.exp)) {
+    return (
+      <main className="page">
+        <header style={{ marginBottom: '2.5rem' }}>
+          <Link
+            href="/"
+            className="wordmark"
+            style={{ color: 'var(--ink)', fontSize: '1.25rem', textDecoration: 'none' }}
+          >
+            qed&rsquo;bop
+          </Link>
+        </header>
+        <article style={{ maxWidth: '38rem' }}>
+          <p className="chrome" style={{ marginBottom: '0.5rem' }}>Expired</p>
+          <h1
+            style={{
+              fontFamily: 'Georgia, "Source Serif Pro", serif',
+              fontSize: '2.5rem',
+              fontWeight: 600,
+              lineHeight: 1.15,
+              margin: 0,
+            }}
+          >
+            This assignment has expired.
+          </h1>
+          <p
+            style={{
+              fontFamily: 'Georgia, "Source Serif Pro", serif',
+              fontSize: '1.0625rem',
+              lineHeight: 1.7,
+              marginTop: '1.5rem',
+              color: 'var(--muted)',
+            }}
+          >
+            The teacher who created this link set it to expire on{' '}
+            {formatExpirationFriendly(search.exp)}. Ask them for an updated link
+            if you still need to do the assignment.
+          </p>
+          <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
+            <p className="chrome">
+              <Link href="/" style={{ color: 'inherit' }}>qed&rsquo;bop</Link> &middot; public-domain poems set to music
+            </p>
+          </footer>
+        </article>
+      </main>
+    );
+  }
 
   const videoIds = Array.isArray(search.v) ? search.v : search.v ? [search.v] : [];
   const versions = videoIds
@@ -38,12 +92,14 @@ export default async function ViewerPage({ params, searchParams }: Props) {
   const audience = audienceLabel(search.audience);
 
   // Questions arrive as ?q=text&q=text. Each string is one whole question.
-  // Anything that looks like a bare positive integer (legacy URLs from before
-  // the editable-questions change) is ignored.
+  // Bare-integer values (legacy URLs from before the editable-questions
+  // change) are filtered out.
   const rawQuestions = Array.isArray(search.q) ? search.q : search.q ? [search.q] : [];
   const questions = rawQuestions
     .map((q) => q.trim())
     .filter((q) => q.length > 0 && !/^\d+$/.test(q));
+
+  const expiresOn = formatExpirationFriendly(search.exp);
 
   return (
     <main className="page">
@@ -153,6 +209,7 @@ export default async function ViewerPage({ params, searchParams }: Props) {
           <p className="chrome">
             Built with qed&rsquo;bop &middot;{' '}
             <Link href="/" style={{ color: 'inherit' }}>make your own</Link>
+            {expiresOn ? ` · expires ${expiresOn}` : ''}
           </p>
         </footer>
       </article>
