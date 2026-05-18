@@ -12,9 +12,9 @@ type Props = {
   expiration: string;
 };
 
-// Quick mode's bottom section: a single button that generates and reveals
-// the share-with-students URL.
-export function QuickGenerate({
+// Basic mode's bottom section: a single button that generates and reveals
+// the share-with-students URL (plus the teacher edition URL).
+export function BasicGenerate({
   ready,
   generating,
   hasResult,

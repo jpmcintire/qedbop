@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getPoem, audienceLabel, lengthLabel } from '@/lib/poems';
 import { isExpired, formatExpirationFriendly } from '@/lib/expiration';
 import { generateTeacherEdition, type TeacherEdition } from '@/lib/generate-teacher-edition';
+import { TeacherAsk } from './TeacherAsk';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -155,6 +156,13 @@ export default async function TeacherPage({ params, searchParams }: Props) {
             />
           </Suspense>
         )}
+
+        <TeacherAsk
+          slug={poem.slug}
+          audience={audienceSlug}
+          versionIds={videoIds}
+          questions={questions}
+        />
 
         <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
           <p className="chrome">
