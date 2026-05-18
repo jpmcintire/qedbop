@@ -1,6 +1,6 @@
 'use server';
 
-import { getPoem } from '@/lib/poems';
+import { getPoemEnriched } from '@/lib/poems-runtime';
 import { getTopicOptions as _getTopicOptions } from '@/lib/generate-topics';
 import {
   generateQuestions as _generateQuestions,
@@ -17,7 +17,7 @@ export async function fetchTopicOptions(
   slug: string,
   audience: string
 ): Promise<string[]> {
-  const poem = getPoem(slug);
+  const poem = await getPoemEnriched(slug);
   if (!poem) return [];
   return _getTopicOptions(poem, audience);
 }
@@ -37,7 +37,7 @@ export async function fetchQuestions({
   lengths: string[];
   count: number;
 }): Promise<{ questions: string[]; source: 'ai' | 'fallback' }> {
-  const poem = getPoem(slug);
+  const poem = await getPoemEnriched(slug);
   if (!poem) return { questions: [], source: 'fallback' };
 
   const versions = versionIds
@@ -70,7 +70,7 @@ export async function fetchSingleQuestion({
   existingQuestions: string[];
   instruction: string;
 }): Promise<string | null> {
-  const poem = getPoem(slug);
+  const poem = await getPoemEnriched(slug);
   if (!poem) return null;
 
   const versions = versionIds
@@ -102,7 +102,7 @@ export async function fetchTeacherEdition({
   questions: string[];
   overrides?: TeacherEditionOverrides;
 }): Promise<TeacherEdition | null> {
-  const poem = getPoem(slug);
+  const poem = await getPoemEnriched(slug);
   if (!poem) return null;
 
   const versions = versionIds
@@ -131,7 +131,7 @@ export async function fetchTeacherAsk({
   questions: string[];
   history: ChatMessage[];
 }): Promise<string | null> {
-  const poem = getPoem(slug);
+  const poem = await getPoemEnriched(slug);
   if (!poem) return null;
 
   const versions = versionIds

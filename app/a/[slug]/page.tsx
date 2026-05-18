@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPoem, audienceLabel, lengthLabel } from '@/lib/poems';
+import { getPoemEnriched } from '@/lib/poems-runtime';
 import { isExpired, formatExpirationFriendly } from '@/lib/expiration';
 
 type Props = {
@@ -29,7 +30,7 @@ export default async function ViewerPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const search = await searchParams;
 
-  const poem = getPoem(slug);
+  const poem = await getPoemEnriched(slug);
   if (!poem) notFound();
 
   // Expiration is checked before anything else — if the link has expired,
