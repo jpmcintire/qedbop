@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getPoem, audienceLabel } from '@/lib/poems';
+import { getPoem, audienceLabel, lengthLabel } from '@/lib/poems';
 import { isExpired, formatExpirationFriendly } from '@/lib/expiration';
 
 type Props = {
@@ -10,6 +10,7 @@ type Props = {
     audience?: string;
     q?: string | string[];
     exp?: string;
+    len?: string | string[];
   }>;
 };
 
@@ -99,6 +100,13 @@ export default async function ViewerPage({ params, searchParams }: Props) {
     .map((q) => q.trim())
     .filter((q) => q.length > 0 && !/^\d+$/.test(q));
 
+  // Response length(s) chosen by the teacher. Shown as guidance above
+  // the questions so students know what's expected.
+  const lengthValues = Array.isArray(search.len) ? search.len : search.len ? [search.len] : [];
+  const lengthLabels = lengthValues
+    .map((v) => lengthLabel(search.audience ?? 'high-school', v))
+    .filter((x): x is string => !!x);
+
   const expiresOn = formatExpirationFriendly(search.exp);
 
   return (
@@ -176,6 +184,18 @@ export default async function ViewerPage({ params, searchParams }: Props) {
         {questions.length > 0 && (
           <section style={{ marginTop: '3rem', maxWidth: '38rem' }}>
             <p className="chrome" style={{ marginBottom: '0.5rem' }}>Discussion</p>
+            {lengthLabels.length > 0 && (
+              <p
+                style={{
+                  color: 'var(--muted)',
+                  fontSize: '0.875rem',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                Aim for responses of approximately:{' '}
+                <span style={{ color: 'var(--ink)' }}>{lengthLabels.join(' / ')}</span>.
+              </p>
+            )}
             <p
               style={{
                 color: 'var(--muted)',

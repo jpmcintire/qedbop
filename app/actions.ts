@@ -21,12 +21,14 @@ export async function fetchQuestions({
   versionIds,
   audience,
   topics,
+  lengths,
   count,
 }: {
   slug: string;
   versionIds: string[];
   audience: string;
   topics: string[];
+  lengths: string[];
   count: number;
 }): Promise<{ questions: string[]; source: 'ai' | 'fallback' }> {
   const poem = getPoem(slug);
@@ -43,6 +45,7 @@ export async function fetchQuestions({
       count,
       versionLabels: versions.map((v) => v.label),
       topics: topics.length > 0 ? topics : undefined,
+      lengths: lengths.length > 0 ? lengths : undefined,
     },
     poem
   );
