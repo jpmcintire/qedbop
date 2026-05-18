@@ -1,36 +1,71 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { POEMS, AUDIENCES } from '@/lib/poems';
+import {
+  defaultExpirationIso,
+  maxExpirationIso,
+  todayIso,
+  formatExpirationFriendly,
+} from '@/lib/expiration';
 import { fetchTopicOptions, fetchQuestions } from './actions';
 
-export default function BuilderPage() {
-  const [slug, setSlug] = useState<string>(POEMS[0]?.slug ?? '');
-  const [picked, setPicked] = useState<string[]>([]);
-  const [audience, setAudience] = useState<string>('high-school');
+export default function Page() {
+  return (
+    <Suspense fallback={<main className="page" />}>
+      <BuilderPage />
+    </Suspense>
+  );
+}
+
+function BuilderPage() {
+  const sp = useSearchParams();
+
+  // Initialize all state from URL params if present so a teacher can paste
+  // their editable URL back in and resume where they left off.
+  const [slug, setSlug] = useState<string>(() => sp.get('slug') ?? POEMS[0]?.slug ?? '');
+  const [picked, setPicked] = useState<string[]>(() => sp.getAll('v'));
+  const [audience, setAudience] = useState<string>(() => sp.get('audience') ?? 'high-school');
+  const [edited, setEdited] = useState<string[]>(() => sp.getAll('q'));
+  const [questionCount, setQuestionCount] = useState<number>(() => {
+    const fromUrl = sp.getAll('q').length;
+    return fromUrl > 0 ? fromUrl : 4;
+  });
+  const [expiration, setExpiration] = useState<string>(
+    () => sp.get('exp') ?? defaultExpirationIso()
+  );
 
   const [availableTopics, setAvailableTopics] = useState<string[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
-  const [questionCount, setQuestionCount] = useState(4);
-  const [edited, setEdited] = useState<string[]>([]);
   const [generating, startGenerating] = useTransition();
   const [generationError, setGenerationError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const poem = useMemo(() => POEMS.find((p) => p.slug === slug), [slug]);
   const maxQuestions = 8;
 
-  // Load AI-generated topic options whenever poem or audience changes.
+  // Fetch AI-generated topic options when poem or audience changes. The very
+  // first run is special: if we just loaded `edited` from URL params we don't
+  // want this effect to wipe them out. After that, edited gets cleared on
+  // every poem/audience change since it's no longer relevant.
+  const initialMount = useRef(true);
   useEffect(() => {
     if (!slug || !audience) return;
     let cancelled = false;
+
+    if (!initialMount.current) {
+      // user-driven change: clear stale edits
+      setEdited([]);
+      setGenerationError(null);
+    }
+    initialMount.current = false;
+
     setTopicsLoading(true);
     setSelectedTopics([]);
-    setEdited([]);
-    setGenerationError(null);
+
     fetchTopicOptions(slug, audience)
       .then((topics) => {
         if (cancelled) return;
@@ -79,7 +114,6 @@ export default function BuilderPage() {
   function handleGenerate() {
     if (!poem || picked.length === 0) return;
     setGenerationError(null);
-    setCopied(false);
     startGenerating(async () => {
       try {
         const result = await fetchQuestions({
@@ -111,40 +145,26 @@ export default function BuilderPage() {
       next[index] = value;
       return next;
     });
-    setCopied(false);
   }
 
   function removeQuestion(index: number) {
     setEdited((prev) => prev.filter((_, i) => i !== index));
-    setCopied(false);
   }
 
   const ready = picked.length >= 1 && poem != null && edited.length > 0;
 
-  const relativeUrl = useMemo(() => {
-    if (!ready || !poem) return '';
+  const queryString = useMemo(() => {
+    if (!poem) return '';
     const params = new URLSearchParams();
     picked.forEach((id) => params.append('v', id));
     if (audience) params.set('audience', audience);
     edited.filter((q) => q.trim().length > 0).forEach((q) => params.append('q', q));
-    return `/a/${poem.slug}?${params.toString()}`;
-  }, [ready, poem, picked, audience, edited]);
+    if (expiration) params.set('exp', expiration);
+    return params.toString();
+  }, [poem, picked, audience, edited, expiration]);
 
-  const fullUrl =
-    relativeUrl && typeof window !== 'undefined'
-      ? `${window.location.origin}${relativeUrl}`
-      : relativeUrl;
-
-  async function copy() {
-    if (!fullUrl) return;
-    try {
-      await navigator.clipboard.writeText(fullUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // ignore
-    }
-  }
+  const studentUrl = ready && poem ? `/a/${poem.slug}?${queryString}` : '';
+  const editUrl = ready && poem ? `/?slug=${poem.slug}&${queryString}` : '';
 
   const canGenerate = poem != null && picked.length >= 1 && !generating;
 
@@ -295,7 +315,7 @@ export default function BuilderPage() {
       <Step n={4} title="Topics to address (optional)">
         {topicsLoading ? (
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
-            Loading topic options calibrated for {AUDIENCES.find((a) => a.value === audience)?.label ?? audience}&hellip;
+            Loading topic options for {AUDIENCES.find((a) => a.value === audience)?.label ?? audience}&hellip;
           </p>
         ) : availableTopics.length === 0 ? (
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
@@ -403,7 +423,7 @@ export default function BuilderPage() {
       {edited.length > 0 && (
         <Step n={7} title="Edit the questions">
           <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', marginBottom: '0.75rem', maxWidth: '38rem' }}>
-            Tweak any question. Changes are reflected in the URL below in real time. The URL itself carries the question text, so whoever opens it will see exactly what you wrote.
+            Tweak any question. Changes are reflected in the URLs below in real time.
           </p>
           <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.75rem' }}>
             {edited.map((q, i) => (
@@ -446,48 +466,128 @@ export default function BuilderPage() {
         </Step>
       )}
 
-      <section className="hairline" style={{ paddingTop: '1.5rem', marginTop: '2rem' }}>
-        <p className="chrome" style={{ marginBottom: '0.75rem' }}>Shareable URL</p>
+      <Step n={8} title="Expiration">
+        <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', marginBottom: '0.75rem', maxWidth: '38rem' }}>
+          Once this date passes, the student URL stops working (the page shows
+          an &ldquo;expired&rdquo; notice instead of the assignment). Max 30
+          days from today.
+        </p>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'baseline' }}>
+          <input
+            type="date"
+            value={expiration}
+            onChange={(e) => setExpiration(e.target.value)}
+            min={todayIso()}
+            max={maxExpirationIso()}
+            style={{
+              fontFamily: 'inherit',
+              fontSize: '1rem',
+              padding: '0.5rem 0.625rem',
+              border: '1px solid var(--rule)',
+              borderRadius: '0.375rem',
+              background: 'transparent',
+              color: 'var(--ink)',
+            }}
+          />
+          <span className="chrome">{formatExpirationFriendly(expiration)}</span>
+        </div>
+      </Step>
 
+      <section className="hairline" style={{ paddingTop: '1.5rem', marginTop: '2rem' }}>
         {!ready ? (
-          <p style={{ color: 'var(--muted)', maxWidth: '38rem' }}>
-            Generate questions above to build a shareable URL. Every URL carries the
-            poem, the selected videos, the audience, and the question text — so it
-            renders the same for anyone who opens it.
-          </p>
+          <>
+            <p className="chrome" style={{ marginBottom: '0.75rem' }}>Shareable URLs</p>
+            <p style={{ color: 'var(--muted)', maxWidth: '38rem' }}>
+              Generate questions above to build the shareable URLs.
+            </p>
+          </>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '46rem' }}>
-            <code
-              style={{
-                display: 'block',
-                padding: '0.75rem 1rem',
-                background: '#F2EFE7',
-                borderRadius: '0.375rem',
-                fontSize: '0.75rem',
-                wordBreak: 'break-all',
-                lineHeight: 1.5,
-              }}
-            >
-              {fullUrl || relativeUrl}
-            </code>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" className="btn" onClick={copy}>
-                {copied ? 'Copied' : 'Copy URL'}
-              </button>
-              <a
-                href={relativeUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-ghost"
-                style={{ textDecoration: 'none', display: 'inline-block' }}
-              >
-                Open preview
-              </a>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <UrlBlock
+              label="Share with students"
+              description="Send this to students. They see the poem, the videos, and the questions you finalized — they cannot edit anything. Read-only until the expiration date."
+              relativeUrl={studentUrl}
+              accent
+            />
+            <UrlBlock
+              label="Your editable URL"
+              description="Bookmark this for yourself. Opening it loads everything (poem, versions, audience, questions, expiration) back into this builder so you can come back later and tweak the assignment."
+              relativeUrl={editUrl}
+            />
           </div>
         )}
       </section>
     </main>
+  );
+}
+
+function UrlBlock({
+  label,
+  description,
+  relativeUrl,
+  accent,
+}: {
+  label: string;
+  description: string;
+  relativeUrl: string;
+  accent?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  const fullUrl =
+    typeof window !== 'undefined' ? `${window.location.origin}${relativeUrl}` : relativeUrl;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <div
+      style={{
+        padding: '1rem 1.25rem',
+        border: `1px solid ${accent ? 'var(--ink)' : 'var(--rule)'}`,
+        borderRadius: '0.5rem',
+        background: accent ? 'rgba(27,27,26,0.04)' : 'transparent',
+      }}
+    >
+      <p className="chrome" style={{ marginBottom: '0.375rem' }}>{label}</p>
+      <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', marginBottom: '0.75rem', maxWidth: '46rem' }}>
+        {description}
+      </p>
+      <code
+        style={{
+          display: 'block',
+          padding: '0.625rem 0.875rem',
+          background: '#F2EFE7',
+          borderRadius: '0.375rem',
+          fontSize: '0.75rem',
+          wordBreak: 'break-all',
+          lineHeight: 1.5,
+          marginBottom: '0.75rem',
+        }}
+      >
+        {fullUrl}
+      </code>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <button type="button" className="btn" onClick={copy}>
+          {copied ? 'Copied' : 'Copy URL'}
+        </button>
+        <a
+          href={relativeUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="btn btn-ghost"
+          style={{ textDecoration: 'none', display: 'inline-block' }}
+        >
+          Open ↗
+        </a>
+      </div>
+    </div>
   );
 }
 
