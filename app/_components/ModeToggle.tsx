@@ -53,8 +53,12 @@ export function ModeToggle({ mode, setMode }: Props) {
         style={{
           color: 'var(--muted)',
           fontSize: '0.8125rem',
+          lineHeight: 1.5,
           marginTop: '0.5rem',
           maxWidth: '38rem',
+          // Reserve enough vertical space for the longer copy so toggling
+          // modes doesn't shift everything below.
+          minHeight: '3.75rem',
         }}
       >
         {COPY[mode]}

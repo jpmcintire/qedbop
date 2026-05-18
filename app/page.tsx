@@ -375,8 +375,25 @@ function BuilderPage() {
         </Step>
       )}
 
-      {mode === 'custom' && (
-        <Step n={3} title="Audience">
+      <Step n={3} title="Audience">
+        {mode === 'basic' ? (
+          // Visually matches the select footprint (same font, padding, and
+          // bottom rule) so toggling to/from Custom doesn't shift the page.
+          <div
+            style={{
+              ...selectStyle,
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              gap: '1rem',
+            }}
+          >
+            <span>Middle school</span>
+            <span className="chrome" style={{ color: 'var(--muted)' }}>
+              Locked in Basic mode
+            </span>
+          </div>
+        ) : (
           <select
             value={audience}
             onChange={(e) => setAudience(e.target.value)}
@@ -388,8 +405,8 @@ function BuilderPage() {
               </option>
             ))}
           </select>
-        </Step>
-      )}
+        )}
+      </Step>
 
       {mode === 'basic' ? (
         <BasicGenerate
