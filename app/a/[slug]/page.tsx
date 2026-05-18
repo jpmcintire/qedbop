@@ -229,7 +229,7 @@ export default async function ViewerPage({ params, searchParams }: Props) {
         <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
           <p className="chrome">
             Built with qed&rsquo;bop &middot;{' '}
-            <Link href="/" style={{ color: 'inherit' }}>make your own</Link>
+            <Link href="/build" style={{ color: 'inherit' }}>make your own</Link>
             {expiresOn ? ` · expires ${expiresOn}` : ''}
           </p>
         </footer>
