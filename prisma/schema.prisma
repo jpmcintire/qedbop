@@ -1,0 +1,37 @@
+// Scoped Prisma usage: a single VideoAnnotation table that stores
+// per-video metadata (overrides for the static defaults in lib/poems.ts).
+// The Postgres database is attached to Railway from the original platform
+// attempt; this brings it into use without re-introducing auth, admin
+// pages, accounts, or any of the surface area that made deploys painful.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model VideoAnnotation {
+  youtubeId       String   @id
+  // Optional override of the static label in lib/poems.ts (e.g. "Folk
+  // acoustic — Solo guitar"). When null, falls back to the static label.
+  label           String?
+  // Objective metadata, safe to share with Claude for any output.
+  durationSeconds Int?
+  genre           String?
+  vocalCharacter  String?
+  artist          String?
+  recordingYear   Int?
+  // Interpretive themes — no timestamps, no specific moments. Used by
+  // BOTH student-facing generators (questions) and teacher-facing ones.
+  themes          String?  @db.Text
+  // Teacher-only annotations — may include timestamps. Used ONLY by
+  // teacher-edition + teacher-chat generators. The product's moat
+  // depends on this never leaking to student-facing output.
+  teacherNotes    String?  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

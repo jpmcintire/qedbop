@@ -28,11 +28,11 @@ The full original architecture (teacher accounts, Postgres, admin UI, payments) 
 - **TypeScript**, strict mode
 - **Anthropic SDK** for Claude API calls (`@anthropic-ai/sdk`)
 - **zod** for response validation
-- **No database**. URL parameters carry all assignment state.
+- **Scoped Postgres**. URL parameters carry all *assignment* state; the database stores only per-video annotation overrides (`VideoAnnotation` table). No accounts, no sessions, no other tables. The student/teacher pages still work fully without the DB — it's purely an enrichment source.
 - **No tailwind**. Styling is a small `app/globals.css` (CSS variables, `.btn`, `.chrome`, `.poem`, `.wordmark`, `.hairline`, `.page`) plus inline styles for component-specific layout.
 - **No auth, no payments, no email.** Anonymous from the student's side; teachers operate without accounts.
 
-**Deployed on Railway.** DNS managed at Cloudflare in DNS-only (gray cloud) mode. Domain `qedbop.com`. Postgres is attached to the Railway project from an earlier deploy attempt but is NOT used by current code. Don't add database usage without explicit user sign-off — that was the source of the deployment saga that led to the lite MVP.
+**Deployed on Railway.** DNS managed at Cloudflare in DNS-only (gray cloud) mode. Domain `qedbop.com`. Postgres is attached to the Railway project; one table (`VideoAnnotation`) is used for the admin video-edit UI. The schema is in `prisma/schema.prisma`; the client singleton is in `lib/db.ts`; runtime enrichment merges DB rows over `lib/poems.ts` defaults via `getPoemEnriched()` in `lib/poems-runtime.ts`. **Don't grow the schema without explicit user sign-off** — adding accounts/auth/multi-tenant tables is what caused the original deploy saga. One scoped table is the line.
 
 ---
 
@@ -76,17 +76,35 @@ app/
                           # AI-generated agenda, bio, context, commentary
                           # (Suspense-streamed in two boundaries)
     TeacherAsk.tsx        # client chat component at the bottom of /t/
+    ProControls.tsx       # client toggle + chips for Basic/Pro teacher view
+  admin/
+    page.tsx              # list of all videos across all poems
+    actions.ts            # 'use server' saveVideoAnnotation, clearVideoAnnotation
+    videos/[youtubeId]/
+      page.tsx            # edit one video — server component, fetches state
+      EditForm.tsx        # client form for editing the annotation fields
+prisma/
+  schema.prisma           # one model: VideoAnnotation (per-video override row)
 lib/
-  poems.ts                # POEMS data + AUDIENCES + LENGTHS_BY_AUDIENCE +
-                          # DEFAULT_LENGTH_BY_AUDIENCE + helpers
-  expiration.ts           # date helpers: todayIso, defaultExpirationIso,
-                          # maxExpirationIso, isExpired, formatExpirationFriendly
+  poems.ts                # POEMS static data + Version type + AUDIENCES +
+                          # LENGTHS_BY_AUDIENCE + DEFAULT_LENGTH_BY_AUDIENCE +
+                          # versionPromptBlock(v, mode) helper
+  poems-runtime.ts        # SERVER-ONLY. getPoemEnriched(slug) merges DB
+                          # VideoAnnotation rows over static defaults.
+                          # getVideoEditState(youtubeId) for admin form.
+  db.ts                   # Prisma client singleton
+  expiration.ts           # date helpers
   generate-questions.ts   # main question generator + single-question generator
                           # Claude Opus 4.7 calls with the four rules baked in
+                          # Calls versionPromptBlock(v, 'safe') — no
+                          # teacherNotes ever reaches student-facing prompts
   generate-topics.ts      # audience-calibrated topic-option suggester
   generate-teacher-edition.ts  # one call returns poetBio + historicalContext +
                                # classAgenda + per-question commentary
+                               # Calls versionPromptBlock(v, 'full') —
+                               # teacherNotes ARE used here
   teacher-ask.ts          # chat handler for /t page Q&A
+                          # Calls versionPromptBlock(v, 'full')
 ```
 
 ---
@@ -161,7 +179,7 @@ Identical URLs → identical responses, served instantly. Changing any input →
 ## Important constraints to honor
 
 - **No middleware.** `middleware.ts` does not exist in the project. The earlier saga (PRs #4-#9) involved Next.js / Auth.js / Railway middleware caching producing redirect loops that took hours to track down. The lite MVP works without middleware because pages are public; if auth ever returns, design carefully.
-- **No database, no Prisma.** All assignment state rides in URL params. Adding a database means URLs can shorten dramatically (~30 chars instead of ~1500), but the user has explicitly opted to keep things stateless for now. Don't add DB without explicit instruction.
+- **Scoped Postgres.** One table (`VideoAnnotation`) holds per-video annotation overrides editable through the admin UI. The schema is intentionally tiny — do not add accounts/auth/multi-tenant tables without explicit user sign-off. Student/teacher pages still work without the DB (the `getPoemEnriched` helper catches errors and falls back to `lib/poems.ts`). Assignment state (which videos, audience, questions, exp) still rides entirely in URL params, not the DB.
 - **No Tailwind, no PostCSS.** Style with inline + `globals.css`. Adding a styling library is a non-trivial decision that requires the user's input.
 - **Always use feature branches + PRs.** The user merges manually via GitHub UI. Branch naming: `claude/<short-kebab-description>`. Never push to main directly (Railway watches main and will deploy any push). All work goes through PRs.
 

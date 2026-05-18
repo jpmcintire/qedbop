@@ -1,0 +1,89 @@
+'use server';
+
+import { revalidateTag } from 'next/cache';
+import { z } from 'zod';
+import { prisma } from '@/lib/db';
+
+const SaveSchema = z.object({
+  youtubeId: z.string().min(1),
+  label: z.string().nullable(),
+  durationSeconds: z.number().int().min(0).max(60 * 60 * 4).nullable(),
+  genre: z.string().nullable(),
+  vocalCharacter: z.string().nullable(),
+  artist: z.string().nullable(),
+  recordingYear: z.number().int().min(1500).max(2100).nullable(),
+  themes: z.string().nullable(),
+  teacherNotes: z.string().nullable(),
+});
+
+export type SaveVideoInput = z.infer<typeof SaveSchema>;
+
+export type SaveResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function saveVideoAnnotation(input: SaveVideoInput): Promise<SaveResult> {
+  const parsed = SaveSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues.map((i) => i.message).join('; ') };
+  }
+
+  // Normalize: treat empty strings as null so the DB doesn't store noise.
+  const norm = {
+    ...parsed.data,
+    label: parsed.data.label?.trim() || null,
+    genre: parsed.data.genre?.trim() || null,
+    vocalCharacter: parsed.data.vocalCharacter?.trim() || null,
+    artist: parsed.data.artist?.trim() || null,
+    themes: parsed.data.themes?.trim() || null,
+    teacherNotes: parsed.data.teacherNotes?.trim() || null,
+  };
+
+  try {
+    await prisma.videoAnnotation.upsert({
+      where: { youtubeId: norm.youtubeId },
+      create: norm,
+      update: {
+        label: norm.label,
+        durationSeconds: norm.durationSeconds,
+        genre: norm.genre,
+        vocalCharacter: norm.vocalCharacter,
+        artist: norm.artist,
+        recordingYear: norm.recordingYear,
+        themes: norm.themes,
+        teacherNotes: norm.teacherNotes,
+      },
+    });
+  } catch (err) {
+    console.error('[admin/save] DB write failed:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'DB write failed' };
+  }
+
+  // Bust the AI generator caches so the new annotation takes effect on the
+  // next request. The unstable_cache keys are content-hashed, so technically
+  // any change to the version data already invalidates the cache — but
+  // these explicit tag revalidations are belt-and-suspenders.
+  try {
+    revalidateTag('questions');
+    revalidateTag('teacher-edition');
+    revalidateTag('topics');
+  } catch {
+    // not fatal
+  }
+
+  return { ok: true };
+}
+
+export async function clearVideoAnnotation(youtubeId: string): Promise<SaveResult> {
+  if (!youtubeId) return { ok: false, error: 'no youtubeId' };
+  try {
+    await prisma.videoAnnotation.deleteMany({ where: { youtubeId } });
+  } catch (err) {
+    console.error('[admin/clear] DB delete failed:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'DB delete failed' };
+  }
+  revalidateTag('questions');
+  revalidateTag('teacher-edition');
+  revalidateTag('topics');
+  return { ok: true };
+}

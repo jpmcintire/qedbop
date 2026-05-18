@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getPoem, audienceLabel, lengthLabel } from '@/lib/poems';
+import { audienceLabel, lengthLabel } from '@/lib/poems';
+import { getPoemEnriched } from '@/lib/poems-runtime';
 import { isExpired, formatExpirationFriendly } from '@/lib/expiration';
 import {
   generateTeacherEdition,
@@ -28,7 +29,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const poem = getPoem(slug);
+  const poem = await getPoemEnriched(slug);
   if (!poem) return { title: "qed'bop" };
   return {
     title: `${poem.title} — Teacher edition — qed'bop`,
@@ -41,7 +42,7 @@ export default async function TeacherPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const search = await searchParams;
 
-  const poem = getPoem(slug);
+  const poem = await getPoemEnriched(slug);
   if (!poem) notFound();
 
   // Same expiration semantics as the student page.
@@ -270,7 +271,7 @@ async function TeacherSections({
   questions: string[];
   overrides: TeacherEditionOverrides;
 }) {
-  const poem = getPoem(slug);
+  const poem = await getPoemEnriched(slug);
   if (!poem) return null;
   const versions = versionIds
     .map((id) => poem.versions.find((v) => v.youtubeId === id))
@@ -373,7 +374,7 @@ async function QuestionsWithCommentary({
   lengthLabels: string[];
   overrides: TeacherEditionOverrides;
 }) {
-  const poem = getPoem(slug);
+  const poem = await getPoemEnriched(slug);
   if (!poem) return null;
   const versions = versionIds
     .map((id) => poem.versions.find((v) => v.youtubeId === id))
