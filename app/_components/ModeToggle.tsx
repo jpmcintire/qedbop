@@ -1,5 +1,5 @@
-// Quick / Custom mode pill toggle at the top of the builder.
-type Mode = 'quick' | 'custom';
+// Basic / Custom mode pill toggle at the top of the builder.
+type Mode = 'basic' | 'custom';
 
 type Props = {
   mode: Mode;
@@ -7,10 +7,10 @@ type Props = {
 };
 
 const COPY: Record<Mode, string> = {
-  quick:
-    'Pick a poem, the versions, and the audience. One click to get a student URL with three AI-generated questions at a sensible length.',
+  basic:
+    'Pick a poem and the versions. One click for a student URL plus a teacher edition — calibrated for middle school students, with three AI-generated discussion questions.',
   custom:
-    'Full control: choose topics, response lengths, count, edit questions, set custom expiration. Outputs both a share URL and an editable URL.',
+    'Full control: pick audience, choose topics, response lengths, count, edit questions, set custom expiration. Outputs share, teacher, and editable URLs.',
 };
 
 export function ModeToggle({ mode, setMode }: Props) {
@@ -25,7 +25,7 @@ export function ModeToggle({ mode, setMode }: Props) {
           gap: '0.25rem',
         }}
       >
-        {(['quick', 'custom'] as const).map((m) => {
+        {(['basic', 'custom'] as const).map((m) => {
           const active = mode === m;
           return (
             <button
@@ -44,7 +44,7 @@ export function ModeToggle({ mode, setMode }: Props) {
                 cursor: 'pointer',
               }}
             >
-              {m === 'quick' ? 'Quick mode' : 'Custom mode'}
+              {m === 'basic' ? 'Basic mode' : 'Custom mode'}
             </button>
           );
         })}

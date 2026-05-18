@@ -25,7 +25,7 @@ import {
   TopicPicker,
   LengthPicker,
   QuestionEditor,
-  QuickGenerate,
+  BasicGenerate,
 } from './_components';
 
 export default function Page() {
@@ -41,12 +41,23 @@ function BuilderPage() {
 
   // ----- State (initialized from URL params if present so an editable URL roundtrips cleanly) -----
 
-  const [mode, setMode] = useState<'quick' | 'custom'>(
-    () => (sp.get('mode') === 'quick' ? 'quick' : 'custom')
+  const [mode, setModeState] = useState<'basic' | 'custom'>(
+    () => (sp.get('mode') === 'basic' ? 'basic' : 'custom')
   );
   const [slug, setSlug] = useState<string>(() => sp.get('slug') ?? POEMS[0]?.slug ?? '');
   const [picked, setPicked] = useState<string[]>(() => sp.getAll('v'));
-  const [audience, setAudience] = useState<string>(() => sp.get('audience') ?? 'high-school');
+  // Basic mode is calibrated for middle school students — audience is locked.
+  const initialAudience = sp.get('mode') === 'basic' ? 'middle-school' : (sp.get('audience') ?? 'high-school');
+  const [audience, setAudience] = useState<string>(initialAudience);
+
+  // Switching to Basic mode forces audience to middle-school. Switching to
+  // Custom doesn't change audience — preserves the teacher's previous pick.
+  function setMode(newMode: 'basic' | 'custom') {
+    setModeState(newMode);
+    if (newMode === 'basic' && audience !== 'middle-school') {
+      setAudience('middle-school');
+    }
+  }
   const [edited, setEdited] = useState<string[]>(() => sp.getAll('q'));
   const [questionCount, setQuestionCount] = useState<number>(() => {
     const fromUrl = sp.getAll('q').length;
@@ -58,8 +69,7 @@ function BuilderPage() {
   const [selectedLengths, setSelectedLengths] = useState<string[]>(() => {
     const fromUrl = sp.getAll('len');
     if (fromUrl.length > 0) return fromUrl;
-    const audienceFromUrl = sp.get('audience') ?? 'high-school';
-    return [DEFAULT_LENGTH_BY_AUDIENCE[audienceFromUrl] ?? 'paragraph'];
+    return [DEFAULT_LENGTH_BY_AUDIENCE[initialAudience] ?? 'paragraph'];
   });
 
   const [availableTopics, setAvailableTopics] = useState<string[]>([]);
@@ -207,7 +217,7 @@ function BuilderPage() {
     });
   }
 
-  function handleQuickGenerate() {
+  function handleBasicGenerate() {
     if (!poem || picked.length === 0) return;
     setGenerationError(null);
     const defaultLength = DEFAULT_LENGTH_BY_AUDIENCE[audience] ?? 'paragraph';
@@ -365,27 +375,29 @@ function BuilderPage() {
         </Step>
       )}
 
-      <Step n={3} title="Audience">
-        <select
-          value={audience}
-          onChange={(e) => setAudience(e.target.value)}
-          style={selectStyle}
-        >
-          {AUDIENCES.map((a) => (
-            <option key={a.value} value={a.value}>
-              {a.label}
-            </option>
-          ))}
-        </select>
-      </Step>
+      {mode === 'custom' && (
+        <Step n={3} title="Audience">
+          <select
+            value={audience}
+            onChange={(e) => setAudience(e.target.value)}
+            style={selectStyle}
+          >
+            {AUDIENCES.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+        </Step>
+      )}
 
-      {mode === 'quick' ? (
-        <QuickGenerate
+      {mode === 'basic' ? (
+        <BasicGenerate
           ready={picked.length >= 1 && poem != null}
           generating={generating}
           hasResult={edited.length > 0}
           error={generationError}
-          onGenerate={handleQuickGenerate}
+          onGenerate={handleBasicGenerate}
           studentUrl={studentUrl}
           teacherUrl={teacherUrl}
           expiration={expiration}

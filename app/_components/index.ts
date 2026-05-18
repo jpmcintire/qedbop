@@ -5,4 +5,4 @@ export { VersionPicker } from './VersionPicker';
 export { TopicPicker } from './TopicPicker';
 export { LengthPicker } from './LengthPicker';
 export { QuestionEditor } from './QuestionEditor';
-export { QuickGenerate } from './QuickGenerate';
+export { BasicGenerate } from './BasicGenerate';
