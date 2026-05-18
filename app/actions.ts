@@ -49,7 +49,7 @@ export async function fetchQuestions({
       slug,
       audience,
       count,
-      versionLabels: versions.map((v) => v.label),
+      versions,
       topics: topics.length > 0 ? topics : undefined,
       lengths: lengths.length > 0 ? lengths : undefined,
     },
@@ -81,7 +81,7 @@ export async function fetchSingleQuestion({
     {
       slug,
       audience,
-      versionLabels: versions.map((v) => v.label),
+      versions,
       existingQuestions,
       instruction,
     },
@@ -112,7 +112,7 @@ export async function fetchTeacherEdition({
   return _generateTeacherEdition(
     poem,
     audience,
-    versions.map((v) => v.label),
+    versions,
     questions,
     overrides,
   );
@@ -141,7 +141,7 @@ export async function fetchTeacherAsk({
   return _askTeacher({
     poem,
     audience,
-    versionLabels: versions.map((v) => v.label),
+    versions,
     questions,
     history,
   });
