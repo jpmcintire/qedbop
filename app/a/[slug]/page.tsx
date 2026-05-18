@@ -1,15 +1,13 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getPoem, audienceLabel, type Poem, type Version } from '@/lib/poems';
-import { generateQuestions } from '@/lib/generate-questions';
+import { getPoem, audienceLabel } from '@/lib/poems';
 
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{
     v?: string | string[];
     audience?: string;
-    q?: string;
+    q?: string | string[];
   }>;
 };
 
@@ -30,16 +28,22 @@ export default async function ViewerPage({ params, searchParams }: Props) {
   const poem = getPoem(slug);
   if (!poem) notFound();
 
-  const ids = Array.isArray(search.v) ? search.v : search.v ? [search.v] : [];
-  const versions = ids
+  const videoIds = Array.isArray(search.v) ? search.v : search.v ? [search.v] : [];
+  const versions = videoIds
     .map((id) => poem.versions.find((ver) => ver.youtubeId === id))
     .filter((x): x is NonNullable<typeof x> => !!x);
 
   if (versions.length === 0) notFound();
 
   const audience = audienceLabel(search.audience);
-  const requestedQuestions = Math.max(0, parseInt(search.q ?? '0', 10) || 0);
-  const audienceSlug = search.audience || '';
+
+  // Questions arrive as ?q=text&q=text. Each string is one whole question.
+  // Anything that looks like a bare positive integer (legacy URLs from before
+  // the editable-questions change) is ignored.
+  const rawQuestions = Array.isArray(search.q) ? search.q : search.q ? [search.q] : [];
+  const questions = rawQuestions
+    .map((q) => q.trim())
+    .filter((q) => q.length > 0 && !/^\d+$/.test(q));
 
   return (
     <main className="page">
@@ -113,16 +117,36 @@ export default async function ViewerPage({ params, searchParams }: Props) {
           </div>
         </section>
 
-        {requestedQuestions > 0 && audienceSlug && (
-          <Suspense fallback={<QuestionsLoading count={requestedQuestions} audience={audience} />}>
-            <Questions
-              poem={poem}
-              versions={versions}
-              audienceSlug={audienceSlug}
-              audienceLabel={audience}
-              count={requestedQuestions}
-            />
-          </Suspense>
+        {questions.length > 0 && (
+          <section style={{ marginTop: '3rem', maxWidth: '38rem' }}>
+            <p className="chrome" style={{ marginBottom: '0.5rem' }}>Discussion</p>
+            <p
+              style={{
+                color: 'var(--muted)',
+                fontSize: '0.875rem',
+                marginBottom: '1.25rem',
+                fontStyle: 'italic',
+              }}
+            >
+              Strong responses describe specific moments in the music.
+              &ldquo;The song felt sad&rdquo; is not enough.
+            </p>
+            <ol
+              style={{
+                fontFamily: 'Georgia, "Source Serif Pro", serif',
+                fontSize: '1.0625rem',
+                lineHeight: 1.7,
+                paddingLeft: '1.5rem',
+                margin: 0,
+              }}
+            >
+              {questions.map((q, i) => (
+                <li key={i} style={{ marginBottom: '1rem' }}>
+                  {q}
+                </li>
+              ))}
+            </ol>
+          </section>
         )}
 
         <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
@@ -133,102 +157,5 @@ export default async function ViewerPage({ params, searchParams }: Props) {
         </footer>
       </article>
     </main>
-  );
-}
-
-async function Questions({
-  poem,
-  versions,
-  audienceSlug,
-  audienceLabel,
-  count,
-}: {
-  poem: Poem;
-  versions: Version[];
-  audienceSlug: string;
-  audienceLabel?: string;
-  count: number;
-}) {
-  const { questions, source } = await generateQuestions(
-    {
-      slug: poem.slug,
-      audience: audienceSlug,
-      count,
-      versionLabels: versions.map((v) => v.label),
-    },
-    poem
-  );
-
-  return (
-    <section style={{ marginTop: '3rem', maxWidth: '38rem' }}>
-      <p className="chrome" style={{ marginBottom: '0.5rem' }}>Discussion</p>
-      <p
-        style={{
-          color: 'var(--muted)',
-          fontSize: '0.8125rem',
-          marginBottom: '0.5rem',
-          fontStyle: 'italic',
-        }}
-      >
-        {source === 'ai' ? (
-          <>Generated for {audienceLabel ?? 'this audience'} by Claude Opus 4.7.</>
-        ) : (
-          <>Starter questions (AI generation unavailable).</>
-        )}
-      </p>
-      <p
-        style={{
-          color: 'var(--muted)',
-          fontSize: '0.875rem',
-          marginBottom: '1.25rem',
-          fontStyle: 'italic',
-        }}
-      >
-        Strong responses describe specific moments in the music.
-        &ldquo;The song felt sad&rdquo; is not enough.
-      </p>
-      <ol
-        style={{
-          fontFamily: 'Georgia, "Source Serif Pro", serif',
-          fontSize: '1.0625rem',
-          lineHeight: 1.7,
-          paddingLeft: '1.5rem',
-          margin: 0,
-        }}
-      >
-        {questions.map((q, i) => (
-          <li key={i} style={{ marginBottom: '1rem' }}>
-            {q}
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-function QuestionsLoading({ count, audience }: { count: number; audience?: string }) {
-  return (
-    <section style={{ marginTop: '3rem', maxWidth: '38rem' }}>
-      <p className="chrome" style={{ marginBottom: '0.5rem' }}>Discussion</p>
-      <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', fontStyle: 'italic' }}>
-        Generating {count} question{count === 1 ? '' : 's'}
-        {audience ? ` for ${audience}` : ''} with Claude Opus 4.7&hellip;
-      </p>
-      <div style={{ marginTop: '1.25rem' }}>
-        {Array.from({ length: count }).map((_, i) => (
-          <div
-            key={i}
-            style={{
-              height: '1rem',
-              background: 'var(--rule)',
-              borderRadius: '0.25rem',
-              marginBottom: '0.75rem',
-              width: `${85 - (i % 3) * 15}%`,
-              opacity: 0.5,
-            }}
-          />
-        ))}
-      </div>
-    </section>
   );
 }
