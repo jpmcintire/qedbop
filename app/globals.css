@@ -13,6 +13,10 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Always reserve room for the vertical scrollbar so pages with
+     different content heights don't shift the centered .page layout
+     horizontally as the scrollbar appears or disappears. */
+  scrollbar-gutter: stable;
 }
 
 body {
