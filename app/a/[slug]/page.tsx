@@ -182,7 +182,7 @@ export default async function ViewerPage({ params, searchParams }: Props) {
         </section>
 
         {questions.length > 0 && (
-          <section style={{ marginTop: '3rem', maxWidth: '38rem' }}>
+          <section style={{ marginTop: '3rem' }}>
             <p className="chrome" style={{ marginBottom: '0.5rem' }}>Discussion</p>
             {lengthLabels.length > 0 && (
               <p
