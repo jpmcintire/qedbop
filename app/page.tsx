@@ -295,6 +295,7 @@ function BuilderPage() {
 
   const studentUrl = ready && poem ? `/a/${poem.slug}?${queryString}` : '';
   const editUrl = ready && poem ? `/?mode=${mode}&slug=${poem.slug}&${queryString}` : '';
+  const teacherUrl = ready && poem ? `/t/${poem.slug}?${queryString}` : '';
   const canGenerate = poem != null && picked.length >= 1 && !generating;
   const audienceLabelForLoading =
     audienceLabel(audience) ?? audience;
@@ -386,6 +387,7 @@ function BuilderPage() {
           error={generationError}
           onGenerate={handleQuickGenerate}
           studentUrl={studentUrl}
+          teacherUrl={teacherUrl}
           expiration={expiration}
         />
       ) : (
@@ -529,6 +531,11 @@ function BuilderPage() {
                   description="Send this to students. They see the poem, the videos, and the questions you finalized — they cannot edit anything. Read-only until the expiration date."
                   relativeUrl={studentUrl}
                   accent
+                />
+                <UrlBlock
+                  label="Teacher edition"
+                  description="A supplementary page for you with poet bio, historical context, a suggested class agenda, and per-question teaching commentary. Same expiration as the student URL. First load takes ~15s while Claude generates; cached after."
+                  relativeUrl={teacherUrl}
                 />
                 <UrlBlock
                   label="Your editable URL"
