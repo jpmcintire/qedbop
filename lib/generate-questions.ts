@@ -141,3 +141,91 @@ export async function generateQuestions(args: GenerateArgs, poem: Poem) {
   );
   return cached();
 }
+
+// One-off single-question generation. Used when the teacher wants to add a
+// specific question after seeing the AI's first round. Not cached — each
+// instruction is unique per teacher, and these are infrequent enough that
+// caching adds complexity without payoff.
+const SingleQuestionResponse = z.object({
+  question: z.string().min(1),
+});
+
+type SingleQuestionArgs = {
+  slug: string;
+  audience: string;
+  versionLabels: string[];
+  existingQuestions: string[];
+  instruction: string;
+};
+
+export async function generateSingleQuestion(
+  args: SingleQuestionArgs,
+  poem: Poem
+): Promise<string | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+
+  const audienceGuidance = AUDIENCE_GUIDANCE[args.audience] ?? AUDIENCE_GUIDANCE['high-school'];
+  const audienceLabel = args.audience.replace(/-/g, ' ');
+
+  const versionsLine =
+    args.versionLabels.length > 1
+      ? `Students will listen to ${args.versionLabels.length} different musical settings (${args.versionLabels.join(' and ')}).`
+      : `Students will listen to one musical setting of the poem.`;
+
+  const existingBlock =
+    args.existingQuestions.length > 0
+      ? `\n# Existing questions (do not duplicate these)\n${args.existingQuestions
+          .map((q, i) => `${i + 1}. ${q}`)
+          .join('\n')}\n`
+      : '';
+
+  const userPrompt = `# Poem
+Title: ${poem.title}
+Author: ${poem.author} (${poem.year})
+
+Full text:
+"""
+${poem.text}
+"""
+
+# Audience: ${audienceLabel}
+${versionsLine}
+
+# Calibration
+${audienceGuidance}
+${existingBlock}
+# Teacher's request for the new question
+${args.instruction}
+
+# Required output
+Generate ONE additional discussion question that addresses the teacher's request and fits alongside the existing questions (without duplicating their substance). Follow the four rules in the system prompt.
+
+Return JSON: {"question": "..."}
+
+No prose, no fences.`;
+
+  try {
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    const text = response.content.find((b) => b.type === 'text');
+    if (!text || text.type !== 'text') return null;
+
+    const raw = text.text.trim();
+    const start = raw.indexOf('{');
+    const end = raw.lastIndexOf('}');
+    if (start === -1 || end === -1) return null;
+
+    const parsed = SingleQuestionResponse.parse(JSON.parse(raw.slice(start, end + 1)));
+    return parsed.question.trim();
+  } catch (err) {
+    console.error('[generate-single-question]', err);
+    return null;
+  }
+}
