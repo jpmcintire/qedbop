@@ -1,7 +1,57 @@
 export type Version = {
   label: string;
   youtubeId: string;
+
+  // ---- Objective metadata (safe to share with Claude for any output) ----
+  durationSeconds?: number;
+  genre?: string;
+  vocalCharacter?: string;
+  artist?: string;
+  recordingYear?: number;
+
+  // ---- Interpretive themes (no timestamps, no specific moments) ----
+  // Broader notes about what the music ARGUES about the poem: what the
+  // arrangement emphasizes, what tradition the genre carries, how the
+  // setting reframes the poem. Safe to feed Claude when generating
+  // STUDENT-FACING content.
+  themes?: string;
+
+  // ---- Teacher-only annotations (may include timestamps) ----
+  // Specific timestamped observations: "at 2:35, the modulation lands
+  // under 'we hailed, good morrow'", etc. NEVER fed to Claude when
+  // generating content that students will see (questions on /a/, etc.).
+  // ONLY used in teacher-edition page generation and teacher Q&A chat.
+  // This is the product's moat — students must identify specific
+  // moments themselves; we never reveal them in question prompts.
+  teacherNotes?: string;
 };
+
+// Builds a prompt block describing a version. Two modes:
+//   - 'safe': returns only objective metadata + interpretive themes.
+//     Use this when generating content that ends up on the student page.
+//   - 'full': adds the teacher-only timestamped notes. Use this only
+//     for teacher-edition output and teacher Q&A chat.
+export function versionPromptBlock(v: Version, mode: 'safe' | 'full'): string {
+  const lines: string[] = [`Label: ${v.label}`];
+  if (v.genre) lines.push(`Genre: ${v.genre}`);
+  if (v.vocalCharacter) lines.push(`Vocal: ${v.vocalCharacter}`);
+  if (v.artist) lines.push(`Artist: ${v.artist}`);
+  if (v.recordingYear) lines.push(`Recording year: ${v.recordingYear}`);
+  if (v.durationSeconds) {
+    const min = Math.floor(v.durationSeconds / 60);
+    const sec = v.durationSeconds % 60;
+    lines.push(`Duration: ${min}:${String(sec).padStart(2, '0')}`);
+  }
+  if (v.themes && v.themes.trim()) {
+    lines.push(`Interpretive themes (safe to reference; no specific moments):\n${v.themes.trim()}`);
+  }
+  if (mode === 'full' && v.teacherNotes && v.teacherNotes.trim()) {
+    lines.push(
+      `Teacher-only specific observations (you MAY reference these in teacher-facing output, but never in student-facing output like discussion questions):\n${v.teacherNotes.trim()}`
+    );
+  }
+  return lines.join('\n');
+}
 
 export type Poem = {
   slug: string;
@@ -43,8 +93,31 @@ And bought a morning paper, which neither of us read;
 And she wept, "God bless you!" for the apples and pears,
 And we gave her all our money but our subway fares.`,
     versions: [
-      { label: 'Version 1', youtubeId: 'lAd2Ct6Y1BQ' },
-      { label: 'Version 2', youtubeId: 'C7PGMBtRV-o' },
+      {
+        label: 'Version 1',
+        youtubeId: 'lAd2Ct6Y1BQ',
+        // TODO: fill in once viewed
+        // durationSeconds: ___,
+        // genre: '___',
+        // vocalCharacter: '___',
+        // artist: '___',
+        // recordingYear: ___,
+        themes: `This setting treats the poem as an exuberant young-adult song — the music leans into the "very merry" half of the refrain rather than the "very tired" half. The arrangement carries forward the poem's modernist sensibility: Greenwich Village in 1919 as a place where two friends (lovers? collaborators?) could ride the ferry all night without explanation, and the music doesn't try to explain it either. The cyclical structure of the song echoes the three-stanza repetition of "We were very tired, we were very merry" — each return slightly altered, the way the original phrase shifts in meaning across the poem. The encounter with the shawl-covered woman in the third stanza arrives as a turn, not a climax; the music shapes it as a moral pivot rather than a swell.`,
+        // teacherNotes: see /admin once we build it; for now edit lib/poems.ts directly
+        teacherNotes: '',
+      },
+      {
+        label: 'Version 2',
+        youtubeId: 'C7PGMBtRV-o',
+        // TODO: fill in once viewed
+        // durationSeconds: ___,
+        // genre: '___',
+        // vocalCharacter: '___',
+        // artist: '___',
+        // recordingYear: ___,
+        themes: `This setting argues that the poem is less about youthful joy than about the strange melancholy of staying up all night — the music finds the loneliness inside the merriment. The third-stanza encounter with the woman selling fruit is the song's emotional center: the speakers' generosity is presented not as triumphant charity but as an unsteady, impulsive gesture by two people whose own footing is uncertain. The arrangement makes audible the class distance the poem only glances at: the lilting refrain belongs to the speakers' world, but the encounter forces a different register in. The repeated "very tired, very merry" feels less like a refrain and more like a thing the speakers are convincing themselves of.`,
+        teacherNotes: '',
+      },
     ],
     questions: [
       'The phrase "We were very tired, we were very merry" repeats three times. How does its meaning shift across the three stanzas?',
@@ -82,7 +155,18 @@ But I have promises to keep,
 And miles to go before I sleep,
 And miles to go before I sleep.`,
     versions: [
-      { label: 'Version 1', youtubeId: '2t7rQtX6zjk' },
+      {
+        label: 'Version 1',
+        youtubeId: '2t7rQtX6zjk',
+        // TODO: fill in once viewed
+        // durationSeconds: ___,
+        // genre: '___',
+        // vocalCharacter: '___',
+        // artist: '___',
+        // recordingYear: ___,
+        themes: `The poem's surface is so smooth it has fooled generations of readers into mistaking it for a postcard. A musical setting has to decide whether to reinforce that smoothness or rough it up. This setting honors the poem's restraint: it does not try to dramatize the speaker's hesitation at the woods' edge into something operatic. Instead, the arrangement is built around the doubled final line — "And miles to go before I sleep, / And miles to go before I sleep" — which Frost famously refused to gloss. The setting lets the repetition do its own work. The interlocking aaba-bbcb-ccdc-dddd rhyme scheme that Frost said he had never seen and never tried again creates a sense of forward motion that the music either rides or stalls; either choice is an interpretive argument about the poem.`,
+        teacherNotes: '',
+      },
     ],
     questions: [
       'Why does the speaker stop? The poem does not say directly — what attracts him?',

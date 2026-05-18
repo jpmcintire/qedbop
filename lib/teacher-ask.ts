@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { Poem } from './poems';
+import type { Poem, Version } from './poems';
+import { versionPromptBlock } from './poems';
 
 const MODEL = 'claude-opus-4-7';
 
@@ -15,10 +16,17 @@ const AUDIENCE_LABEL: Record<string, string> = {
 function buildSystemPrompt(
   poem: Poem,
   audience: string,
-  versionLabels: string[],
+  versions: Version[],
   questions: string[]
 ): string {
   const audienceText = AUDIENCE_LABEL[audience] ?? AUDIENCE_LABEL['high-school'];
+
+  const versionsBlock =
+    versions.length > 0
+      ? versions
+          .map((v, i) => `## Setting ${i + 1}\n${versionPromptBlock(v, 'full')}`)
+          .join('\n\n')
+      : '(no settings in the assignment)';
 
   return `You are a teaching assistant for qed'bop, a platform that pairs public-domain poems with musical settings on YouTube. A teacher is preparing to lead a class on the poem below and is asking you questions to deepen their own understanding or to think through how to teach it.
 
@@ -34,7 +42,7 @@ ${poem.text}
 ${audienceText}
 
 # Musical settings in the assignment
-${versionLabels.length > 0 ? versionLabels.map((l) => `- ${l}`).join('\n') : '(none)'}
+${versionsBlock}
 
 # Questions the teacher is assigning to students
 ${questions.length > 0 ? questions.map((q, i) => `${i + 1}. ${q}`).join('\n') : '(none)'}
@@ -48,8 +56,10 @@ Answer the teacher's questions about:
 - How to teach this poem to this audience — what students typically struggle with, what discussion patterns work, scaffolding ideas
 - How to facilitate the specific discussion questions above (without giving away "right" answers)
 
+You have access to teacher-only annotations for each setting — when those are present (timestamped specific observations), feel free to reference them when answering the teacher. The teacher already knows these and may be asking to think them through with you.
+
 # Constraints (non-negotiable)
-1. NEVER fabricate specific musical moments. Do not write "at 1:20 the bass drops out" or "the singer whispers the final line." If you describe music, describe genres, traditions, what kinds of moves the music tends to make — not specific timestamps you cannot verify.
+1. NEVER fabricate specific musical moments. If the teacher-only notes above contain timestamped observations, you may reference them; otherwise describe music in terms of genre, tradition, what kinds of moves the music tends to make — not invented timestamps.
 2. If you don't know something with confidence, say so plainly. Don't invent biographical details, dates, quotes, or critical reception.
 3. Calibrate complexity to the teacher's audience: for middle school, keep your answers practical and grounded; for graduate, you can engage with theory and criticism.
 4. Be conversational. Short paragraphs. No bullet points unless the teacher asks for them. No emoji.
@@ -61,13 +71,13 @@ Speak as a knowledgeable, calm colleague — not a search result.`;
 export async function askTeacher({
   poem,
   audience,
-  versionLabels,
+  versions,
   questions,
   history,
 }: {
   poem: Poem;
   audience: string;
-  versionLabels: string[];
+  versions: Version[];
   questions: string[];
   history: ChatMessage[];
 }): Promise<string | null> {
@@ -83,7 +93,7 @@ export async function askTeacher({
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 1500,
-      system: buildSystemPrompt(poem, audience, versionLabels, questions),
+      system: buildSystemPrompt(poem, audience, versions, questions),
       messages: history.map((m) => ({ role: m.role, content: m.content })),
     });
 

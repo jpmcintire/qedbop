@@ -197,8 +197,23 @@ line breaks preserved.
 
 Blank lines separate stanzas.`,
   versions: [
-    { label: 'Version 1', youtubeId: 'XXXXXXXXXXX' },
-    { label: 'Version 2', youtubeId: 'YYYYYYYYYYY' },
+    {
+      label: 'Version 1',
+      youtubeId: 'XXXXXXXXXXX',
+      // All optional. Objective metadata is safe to feed Claude anywhere.
+      durationSeconds: 285,
+      genre: 'Folk acoustic',
+      vocalCharacter: 'Solo male tenor, plainspoken',
+      artist: 'Artist Name',
+      recordingYear: 2019,
+      // Interpretive themes — NO timestamps, NO specific moment descriptions.
+      // Used by question generator (student-facing) AND teacher generators.
+      themes: 'Broader notes about what the music argues about the poem...',
+      // Teacher-only annotations — MAY contain timestamps and specific moments.
+      // Used ONLY by teacher-edition generator and teacher Q&A chat.
+      // NEVER used by question generator (student-facing).
+      teacherNotes: '0:42 — instrumental shift on "promises to keep"\n2:15 — vocal pulls back to a whisper',
+    },
   ],
   questions: [
     'Starter question 1 (used as fallback if AI generation fails).',
@@ -208,6 +223,11 @@ Blank lines separate stanzas.`,
 ```
 
 No build step, no schema migration. Just save and commit.
+
+**Two-field music-notes split is non-negotiable.** `themes` is interpretive (no specific moments); `teacherNotes` is specific (may include timestamps). The product's AI-resistance moat depends on `teacherNotes` NEVER reaching student-facing content. This is enforced two ways:
+1. The `versionPromptBlock(v, mode)` helper in `lib/poems.ts` takes `mode: 'safe' | 'full'` — only `'full'` includes `teacherNotes`.
+2. `lib/generate-questions.ts` (student content) calls with `'safe'`; `lib/generate-teacher-edition.ts` and `lib/teacher-ask.ts` (teacher content) call with `'full'`.
+Don't break this split. If a new generator needs version context, decide explicitly which mode it gets.
 
 ---
 

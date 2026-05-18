@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { unstable_cache } from 'next/cache';
 import { z } from 'zod';
-import type { Poem } from './poems';
+import type { Poem, Version } from './poems';
+import { versionPromptBlock } from './poems';
 
 const MODEL = 'claude-opus-4-7';
 
@@ -36,7 +37,7 @@ type GenerateArgs = {
   slug: string;
   audience: string;
   count: number;
-  versionLabels: string[];
+  versions: Version[]; // student-facing — only safe fields get into the prompt
   topics?: string[];
   lengths?: string[]; // length labels (e.g. "Short essay (3-4 paragraphs)")
 };
@@ -45,10 +46,16 @@ async function callClaude(args: GenerateArgs, poem: Poem): Promise<string[]> {
   const audienceGuidance = AUDIENCE_GUIDANCE[args.audience] ?? AUDIENCE_GUIDANCE['high-school'];
   const audienceLabel = args.audience.replace(/-/g, ' ');
 
+  const versionCount = args.versions.length;
   const versionsLine =
-    args.versionLabels.length > 1
-      ? `Students will listen to ${args.versionLabels.length} different musical settings of the poem (labeled ${args.versionLabels.join(' and ')}). Questions should invite comparison across the settings.`
+    versionCount > 1
+      ? `Students will listen to ${versionCount} different musical settings of the poem. Questions should invite comparison across the settings.`
       : `Students will listen to one musical setting of the poem.`;
+
+  // SAFE mode — student-facing content. No teacher-only notes.
+  const versionsBlock = args.versions
+    .map((v, i) => `## Setting ${i + 1}\n${versionPromptBlock(v, 'safe')}`)
+    .join('\n\n');
 
   const topicsBlock =
     args.topics && args.topics.length > 0
@@ -86,6 +93,9 @@ ${poem.text}
 # Assignment context
 Audience level: ${audienceLabel}
 ${versionsLine}
+
+# Musical settings (context only — do NOT invent or paraphrase specific musical moments; the interpretive themes below describe the music's broader argument, never specific timestamped events)
+${versionsBlock}
 
 # Calibration for this audience
 ${audienceGuidance}
@@ -141,18 +151,34 @@ async function _generate(args: GenerateArgs, poem: Poem): Promise<{ questions: s
   }
 }
 
+// Compact representation of each version for cache-key purposes. Includes
+// everything safe-mode would feed into the prompt so the cache invalidates
+// when any of those fields change in lib/poems.ts.
+function versionCacheKey(v: Version): string {
+  return [
+    v.label,
+    v.youtubeId,
+    v.genre ?? '',
+    v.vocalCharacter ?? '',
+    v.artist ?? '',
+    String(v.recordingYear ?? ''),
+    String(v.durationSeconds ?? ''),
+    v.themes ?? '',
+  ].join('~');
+}
+
 export async function generateQuestions(args: GenerateArgs, poem: Poem) {
   const cacheKey = [
     args.slug,
     args.audience,
     String(args.count),
-    ...args.versionLabels,
+    ...args.versions.map(versionCacheKey),
     ...(args.topics ?? []),
     ...(args.lengths ?? []),
   ].join('|');
   const cached = unstable_cache(
     async () => _generate(args, poem),
-    ['generate-questions-v3', cacheKey],
+    ['generate-questions-v4', cacheKey],
     { revalidate: 60 * 60 * 24 * 7, tags: ['questions'] } // 1 week
   );
   return cached();
@@ -169,7 +195,7 @@ const SingleQuestionResponse = z.object({
 type SingleQuestionArgs = {
   slug: string;
   audience: string;
-  versionLabels: string[];
+  versions: Version[]; // student-facing — safe mode only
   existingQuestions: string[];
   instruction: string;
 };
@@ -184,10 +210,15 @@ export async function generateSingleQuestion(
   const audienceGuidance = AUDIENCE_GUIDANCE[args.audience] ?? AUDIENCE_GUIDANCE['high-school'];
   const audienceLabel = args.audience.replace(/-/g, ' ');
 
+  const versionCount = args.versions.length;
   const versionsLine =
-    args.versionLabels.length > 1
-      ? `Students will listen to ${args.versionLabels.length} different musical settings (${args.versionLabels.join(' and ')}).`
+    versionCount > 1
+      ? `Students will listen to ${versionCount} different musical settings.`
       : `Students will listen to one musical setting of the poem.`;
+
+  const versionsBlock = args.versions
+    .map((v, i) => `## Setting ${i + 1}\n${versionPromptBlock(v, 'safe')}`)
+    .join('\n\n');
 
   const existingBlock =
     args.existingQuestions.length > 0
@@ -207,6 +238,9 @@ ${poem.text}
 
 # Audience: ${audienceLabel}
 ${versionsLine}
+
+# Musical settings (context only — never invent or paraphrase specific musical moments)
+${versionsBlock}
 
 # Calibration
 ${audienceGuidance}

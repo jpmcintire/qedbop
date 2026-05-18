@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { unstable_cache } from 'next/cache';
 import { z } from 'zod';
-import type { Poem } from './poems';
+import type { Poem, Version } from './poems';
+import { versionPromptBlock } from './poems';
 
 const MODEL = 'claude-opus-4-7';
 
@@ -51,7 +52,7 @@ export type TeacherEditionOverrides = {
 async function _generate(
   poem: Poem,
   audience: string,
-  versionLabels: string[],
+  versions: Version[],
   questions: string[],
   overrides: TeacherEditionOverrides = {},
 ): Promise<TeacherEdition | null> {
@@ -62,9 +63,16 @@ async function _generate(
   const audienceText = AUDIENCE_LABEL[audience] ?? AUDIENCE_LABEL['high-school'];
 
   const versionsLine =
-    versionLabels.length > 1
-      ? `Students will listen to ${versionLabels.length} different musical settings (${versionLabels.join(' and ')}).`
+    versions.length > 1
+      ? `Students will listen to ${versions.length} different musical settings.`
       : `Students will listen to one musical setting of the poem.`;
+
+  // FULL mode — this is the teacher-edition generator. The teacher-only
+  // notes (timestamps, specific moments) are fair game in agenda design,
+  // per-question teaching commentary, and historical context.
+  const versionsBlock = versions
+    .map((v, i) => `## Setting ${i + 1}\n${versionPromptBlock(v, 'full')}`)
+    .join('\n\n');
 
   const agendaTarget = overrides.agendaMinutes
     ? `Target a TOTAL agenda time of approximately ${overrides.agendaMinutes} minutes (give or take 5). Distribute time across activities accordingly.`
@@ -92,6 +100,8 @@ ${audienceText}
 
 # Musical settings
 ${versionsLine}
+
+${versionsBlock}
 
 # Questions in the assignment (in order)
 ${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
@@ -158,25 +168,42 @@ No prose, no fences. Make every word earn its place.`;
   }
 }
 
+// Cache key fragment for one version that includes EVERYTHING the
+// teacher-edition prompt sees (including teacherNotes). Changing any of
+// these in lib/poems.ts invalidates the cache entry.
+function versionFullCacheKey(v: Version): string {
+  return [
+    v.label,
+    v.youtubeId,
+    v.genre ?? '',
+    v.vocalCharacter ?? '',
+    v.artist ?? '',
+    String(v.recordingYear ?? ''),
+    String(v.durationSeconds ?? ''),
+    v.themes ?? '',
+    v.teacherNotes ?? '',
+  ].join('~');
+}
+
 export async function generateTeacherEdition(
   poem: Poem,
   audience: string,
-  versionLabels: string[],
+  versions: Version[],
   questions: string[],
   overrides: TeacherEditionOverrides = {},
 ): Promise<TeacherEdition | null> {
   const cacheKey = [
     poem.slug,
     audience,
-    String(versionLabels.length),
     overrides.agendaMinutes ? `am=${overrides.agendaMinutes}` : 'am=auto',
     `bd=${overrides.bioDepth ?? 'short'}`,
     `cd=${overrides.contextDepth ?? 'short'}`,
+    ...versions.map(versionFullCacheKey),
     ...questions,
   ].join('|');
   const cached = unstable_cache(
-    () => _generate(poem, audience, versionLabels, questions, overrides),
-    ['teacher-edition-v2', cacheKey],
+    () => _generate(poem, audience, versions, questions, overrides),
+    ['teacher-edition-v3', cacheKey],
     { revalidate: 60 * 60 * 24 * 7, tags: ['teacher-edition'] }
   );
   return cached();
