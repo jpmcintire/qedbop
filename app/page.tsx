@@ -381,17 +381,6 @@ function BuilderPage() {
                       <span style={{ fontFamily: 'Georgia, serif', fontSize: '0.9375rem' }}>
                         {v.label}
                       </span>
-                      <span
-                        className="chrome"
-                        style={{
-                          marginTop: '0.125rem',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {v.youtubeId}
-                      </span>
                     </span>
                   </label>
                   <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
