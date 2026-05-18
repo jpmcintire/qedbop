@@ -37,6 +37,7 @@ type GenerateArgs = {
   audience: string;
   count: number;
   versionLabels: string[];
+  topics?: string[];
 };
 
 async function callClaude(args: GenerateArgs, poem: Poem): Promise<string[]> {
@@ -47,6 +48,16 @@ async function callClaude(args: GenerateArgs, poem: Poem): Promise<string[]> {
     args.versionLabels.length > 1
       ? `Students will listen to ${args.versionLabels.length} different musical settings of the poem (labeled ${args.versionLabels.join(' and ')}). Questions should invite comparison across the settings.`
       : `Students will listen to one musical setting of the poem.`;
+
+  const topicsBlock =
+    args.topics && args.topics.length > 0
+      ? `\n# Required topic coverage
+The question set MUST collectively address all of these topics:
+${args.topics.map((t) => `- ${t}`).join('\n')}
+
+Some questions may address multiple topics; some topics may need their own question. Aim to cover every listed topic at least once across the ${args.count} question${args.count === 1 ? '' : 's'}.
+`
+      : '';
 
   const userPrompt = `# Poem
 Title: ${poem.title}
@@ -63,7 +74,7 @@ ${versionsLine}
 
 # Calibration for this audience
 ${audienceGuidance}
-
+${topicsBlock}
 # Required output
 Generate EXACTLY ${args.count} discussion question${args.count === 1 ? '' : 's'} as a JSON object:
 
@@ -116,10 +127,16 @@ async function _generate(args: GenerateArgs, poem: Poem): Promise<{ questions: s
 }
 
 export async function generateQuestions(args: GenerateArgs, poem: Poem) {
-  const cacheKey = [args.slug, args.audience, String(args.count), ...args.versionLabels].join('|');
+  const cacheKey = [
+    args.slug,
+    args.audience,
+    String(args.count),
+    ...args.versionLabels,
+    ...(args.topics ?? []),
+  ].join('|');
   const cached = unstable_cache(
     async () => _generate(args, poem),
-    ['generate-questions', cacheKey],
+    ['generate-questions-v2', cacheKey],
     { revalidate: 60 * 60 * 24 * 7, tags: ['questions'] } // 1 week
   );
   return cached();
