@@ -10,7 +10,7 @@ import {
   todayIso,
   formatExpirationFriendly,
 } from '@/lib/expiration';
-import { fetchTopicOptions, fetchQuestions } from './actions';
+import { fetchTopicOptions, fetchQuestions, fetchSingleQuestion } from './actions';
 
 export default function Page() {
   return (
@@ -31,7 +31,7 @@ function BuilderPage() {
   const [edited, setEdited] = useState<string[]>(() => sp.getAll('q'));
   const [questionCount, setQuestionCount] = useState<number>(() => {
     const fromUrl = sp.getAll('q').length;
-    return fromUrl > 0 ? fromUrl : 4;
+    return Math.min(5, fromUrl > 0 ? fromUrl : 4);
   });
   const [expiration, setExpiration] = useState<string>(
     () => sp.get('exp') ?? defaultExpirationIso()
@@ -40,12 +40,18 @@ function BuilderPage() {
   const [availableTopics, setAvailableTopics] = useState<string[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [customTopics, setCustomTopics] = useState<string[]>([]);
+  const [customTopicInput, setCustomTopicInput] = useState('');
 
   const [generating, startGenerating] = useTransition();
   const [generationError, setGenerationError] = useState<string | null>(null);
 
+  const [customQuestionInput, setCustomQuestionInput] = useState('');
+  const [generatingCustom, startGeneratingCustom] = useTransition();
+  const [customQuestionError, setCustomQuestionError] = useState<string | null>(null);
+
   const poem = useMemo(() => POEMS.find((p) => p.slug === slug), [slug]);
-  const maxQuestions = 8;
+  const maxQuestions = 5;
 
   // Fetch AI-generated topic options when poem or audience changes. The very
   // first run is special: if we just loaded `edited` from URL params we don't
@@ -86,6 +92,8 @@ function BuilderPage() {
     setSlug(newSlug);
     setPicked([]);
     setEdited([]);
+    setCustomTopics([]);
+    setCustomTopicInput('');
   }
 
   function togglePick(youtubeId: string) {
@@ -109,6 +117,54 @@ function BuilderPage() {
   function toggleTopic(t: string) {
     setSelectedTopics((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
     setEdited([]);
+  }
+
+  function addCustomTopic() {
+    const trimmed = customTopicInput.trim();
+    if (!trimmed) return;
+    if (customTopics.includes(trimmed) || availableTopics.includes(trimmed)) {
+      setCustomTopicInput('');
+      return;
+    }
+    setCustomTopics((prev) => [...prev, trimmed]);
+    setSelectedTopics((prev) => [...prev, trimmed]);
+    setCustomTopicInput('');
+    setEdited([]);
+  }
+
+  function removeCustomTopic(t: string) {
+    setCustomTopics((prev) => prev.filter((x) => x !== t));
+    setSelectedTopics((prev) => prev.filter((x) => x !== t));
+    setEdited([]);
+  }
+
+  function handleAddCustomQuestion() {
+    if (!poem || picked.length === 0) return;
+    const instruction = customQuestionInput.trim();
+    if (!instruction) return;
+    setCustomQuestionError(null);
+    startGeneratingCustom(async () => {
+      try {
+        const result = await fetchSingleQuestion({
+          slug: poem.slug,
+          versionIds: picked,
+          audience,
+          existingQuestions: edited,
+          instruction,
+        });
+        if (!result) {
+          setCustomQuestionError('Could not generate the question. Try rephrasing the request.');
+          return;
+        }
+        setEdited((prev) => [...prev, result]);
+        setCustomQuestionInput('');
+      } catch (err) {
+        console.error(err);
+        setCustomQuestionError(
+          err instanceof Error ? err.message : 'Generation failed. Try again.'
+        );
+      }
+    });
   }
 
   function handleGenerate() {
@@ -317,53 +373,136 @@ function BuilderPage() {
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
             Loading topic options for {AUDIENCES.find((a) => a.value === audience)?.label ?? audience}&hellip;
           </p>
-        ) : availableTopics.length === 0 ? (
-          <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
-            No topic options available. You can still generate questions without selecting any.
-          </p>
         ) : (
           <>
-            <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', marginBottom: '0.75rem', maxWidth: '38rem' }}>
-              Check any topics you want the question set to cover. Leave all unchecked to let Claude pick freely. These options regenerate when you change audience.
-            </p>
-            <ul
-              style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                display: 'grid',
-                gap: '0.5rem',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              }}
-            >
-              {availableTopics.map((t) => {
-                const isSelected = selectedTopics.includes(t);
-                return (
-                  <li key={t}>
-                    <label
+            {availableTopics.length > 0 && (
+              <>
+                <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', marginBottom: '0.75rem', maxWidth: '38rem' }}>
+                  Check any topics you want the question set to cover. Leave all unchecked to let Claude pick freely. These options regenerate when you change audience.
+                </p>
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'grid',
+                    gap: '0.5rem',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                    marginBottom: '1rem',
+                  }}
+                >
+                  {availableTopics.map((t) => {
+                    const isSelected = selectedTopics.includes(t);
+                    return (
+                      <li key={t}>
+                        <label
+                          style={{
+                            display: 'flex',
+                            gap: '0.5rem',
+                            alignItems: 'center',
+                            padding: '0.5rem 0.75rem',
+                            border: `1px solid ${isSelected ? 'var(--ink)' : 'var(--rule)'}`,
+                            borderRadius: '0.375rem',
+                            cursor: 'pointer',
+                            background: isSelected ? 'rgba(27,27,26,0.04)' : 'transparent',
+                            fontSize: '0.9375rem',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleTopic(t)}
+                          />
+                          <span>{t}</span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+
+            <div style={{ maxWidth: '38rem' }}>
+              <p className="chrome" style={{ marginBottom: '0.5rem' }}>Other</p>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  value={customTopicInput}
+                  onChange={(e) => setCustomTopicInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCustomTopic();
+                    }
+                  }}
+                  placeholder="Add your own topic and press Enter"
+                  style={{
+                    flex: 1,
+                    fontFamily: 'inherit',
+                    fontSize: '0.9375rem',
+                    padding: '0.5rem 0.75rem',
+                    border: '1px solid var(--rule)',
+                    borderRadius: '0.375rem',
+                    background: 'transparent',
+                    color: 'var(--ink)',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={addCustomTopic}
+                  className="btn btn-ghost"
+                  disabled={!customTopicInput.trim()}
+                >
+                  Add
+                </button>
+              </div>
+              {customTopics.length > 0 && (
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: '0.75rem 0 0 0',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.375rem',
+                  }}
+                >
+                  {customTopics.map((t) => (
+                    <li
+                      key={t}
                       style={{
-                        display: 'flex',
-                        gap: '0.5rem',
+                        display: 'inline-flex',
                         alignItems: 'center',
-                        padding: '0.5rem 0.75rem',
-                        border: `1px solid ${isSelected ? 'var(--ink)' : 'var(--rule)'}`,
-                        borderRadius: '0.375rem',
-                        cursor: 'pointer',
-                        background: isSelected ? 'rgba(27,27,26,0.04)' : 'transparent',
-                        fontSize: '0.9375rem',
+                        gap: '0.375rem',
+                        padding: '0.25rem 0.625rem',
+                        border: '1px solid var(--ink)',
+                        borderRadius: '9999px',
+                        background: 'rgba(27,27,26,0.04)',
+                        fontSize: '0.8125rem',
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleTopic(t)}
-                      />
                       <span>{t}</span>
-                    </label>
-                  </li>
-                );
-              })}
-            </ul>
+                      <button
+                        type="button"
+                        onClick={() => removeCustomTopic(t)}
+                        title="Remove this topic"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--muted)',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          padding: 0,
+                          lineHeight: 1,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </>
         )}
       </Step>
@@ -463,6 +602,68 @@ function BuilderPage() {
               </li>
             ))}
           </ol>
+
+          <div
+            style={{
+              marginTop: '1.5rem',
+              paddingTop: '1.25rem',
+              borderTop: '1px solid var(--rule)',
+              maxWidth: '46rem',
+            }}
+          >
+            <p className="chrome" style={{ marginBottom: '0.5rem' }}>
+              Add a custom question
+            </p>
+            <p
+              style={{
+                color: 'var(--muted)',
+                fontSize: '0.8125rem',
+                marginBottom: '0.75rem',
+              }}
+            >
+              Describe what you want the next question to be about. Claude will
+              generate one question that fits alongside the others without
+              repeating them.
+            </p>
+            <textarea
+              value={customQuestionInput}
+              onChange={(e) => setCustomQuestionInput(e.target.value)}
+              rows={2}
+              placeholder="E.g., 'Ask about how Millay's biography influences the reading.'"
+              style={{
+                width: '100%',
+                fontFamily: 'inherit',
+                fontSize: '0.9375rem',
+                lineHeight: 1.5,
+                padding: '0.625rem 0.75rem',
+                border: '1px solid var(--rule)',
+                borderRadius: '0.375rem',
+                resize: 'vertical',
+                background: 'transparent',
+                color: 'var(--ink)',
+                marginBottom: '0.5rem',
+              }}
+            />
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={handleAddCustomQuestion}
+                className="btn"
+                disabled={
+                  !customQuestionInput.trim() ||
+                  generatingCustom ||
+                  picked.length === 0
+                }
+              >
+                {generatingCustom ? 'Generating…' : 'Generate question'}
+              </button>
+              {customQuestionError && (
+                <span style={{ color: '#a33', fontSize: '0.8125rem' }}>
+                  {customQuestionError}
+                </span>
+              )}
+            </div>
+          </div>
         </Step>
       )}
 
