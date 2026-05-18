@@ -144,17 +144,6 @@ function BuilderPage() {
     setEdited([]);
   }
 
-  function selectAll() {
-    if (!poem) return;
-    setPicked(poem.versions.map((v) => v.youtubeId));
-    setEdited([]);
-  }
-
-  function clearAll() {
-    setPicked([]);
-    setEdited([]);
-  }
-
   function toggleTopic(t: string) {
     setSelectedTopics((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
     setEdited([]);
@@ -345,26 +334,6 @@ function BuilderPage() {
         <Step
           n={2}
           title={`Pick musical versions (${picked.length} selected)`}
-          right={
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={selectAll}
-                className="btn btn-ghost"
-                style={{ fontSize: '0.75rem', padding: '0.375rem 0.875rem' }}
-              >
-                Select all
-              </button>
-              <button
-                type="button"
-                onClick={clearAll}
-                className="btn btn-ghost"
-                style={{ fontSize: '0.75rem', padding: '0.375rem 0.875rem' }}
-              >
-                Clear
-              </button>
-            </div>
-          }
         >
           <VersionPicker
             versions={poem.versions}
