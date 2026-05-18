@@ -113,3 +113,51 @@ export type AudienceValue = (typeof AUDIENCES)[number]['value'];
 export function audienceLabel(value: string | undefined): string | undefined {
   return AUDIENCES.find((a) => a.value === value)?.label;
 }
+
+// Response length options. The list varies by audience — middle schoolers
+// don't get "research paper", post-grads don't get "1-2 sentences" — and the
+// chosen value(s) are fed to the question generator so it can calibrate
+// question complexity.
+export type LengthOption = { value: string; label: string };
+
+export const LENGTHS_BY_AUDIENCE: Record<string, LengthOption[]> = {
+  'middle-school': [
+    { value: 'sentence', label: '1–2 sentences' },
+    { value: 'short-paragraph', label: 'Short paragraph (3–5 sentences)' },
+    { value: 'paragraph', label: 'Paragraph' },
+  ],
+  'high-school': [
+    { value: 'sentence', label: '1–2 sentences' },
+    { value: 'short-paragraph', label: 'Short paragraph' },
+    { value: 'paragraph', label: 'Paragraph' },
+    { value: 'short-essay', label: 'Short essay (3–4 paragraphs)' },
+  ],
+  'college': [
+    { value: 'paragraph', label: 'Paragraph' },
+    { value: 'short-essay', label: 'Short essay (3–4 paragraphs)' },
+    { value: 'essay', label: 'Essay (~750 words)' },
+    { value: 'long-essay', label: 'Long essay (~1500 words)' },
+  ],
+  'post-graduate': [
+    { value: 'short-essay', label: 'Short essay' },
+    { value: 'essay', label: 'Essay (~750 words)' },
+    { value: 'long-essay', label: 'Long essay (~1500 words)' },
+    { value: 'research-paper', label: 'Research paper (3000+ words)' },
+  ],
+};
+
+// Sensible default when an audience is first picked (or in Quick mode).
+export const DEFAULT_LENGTH_BY_AUDIENCE: Record<string, string> = {
+  'middle-school': 'short-paragraph',
+  'high-school': 'paragraph',
+  'college': 'short-essay',
+  'post-graduate': 'essay',
+};
+
+export function getLengthOptions(audience: string): LengthOption[] {
+  return LENGTHS_BY_AUDIENCE[audience] ?? LENGTHS_BY_AUDIENCE['high-school'];
+}
+
+export function lengthLabel(audience: string, value: string): string | undefined {
+  return getLengthOptions(audience).find((l) => l.value === value)?.label;
+}

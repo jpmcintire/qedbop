@@ -38,6 +38,7 @@ type GenerateArgs = {
   count: number;
   versionLabels: string[];
   topics?: string[];
+  lengths?: string[]; // length labels (e.g. "Short essay (3-4 paragraphs)")
 };
 
 async function callClaude(args: GenerateArgs, poem: Poem): Promise<string[]> {
@@ -59,6 +60,20 @@ Some questions may address multiple topics; some topics may need their own quest
 `
       : '';
 
+  const lengthsBlock =
+    args.lengths && args.lengths.length > 0
+      ? `\n# Expected response lengths
+Students will answer with responses of these length(s):
+${args.lengths.map((l) => `- ${l}`).join('\n')}
+
+Calibrate the questions to the lengths the teacher has selected:
+- Questions paired with short answers (1-2 sentences, short paragraph) should be focused and concrete — typically asking students to identify, describe, or notice one specific thing.
+- Questions paired with longer responses (essay, research paper) should invite analysis, argument, synthesis, and the use of multiple pieces of evidence.
+
+If multiple lengths are listed, vary the question complexity across the set so the assignment naturally produces a mix of response lengths. If only one length is listed, calibrate every question to that target.
+`
+      : '';
+
   const userPrompt = `# Poem
 Title: ${poem.title}
 Author: ${poem.author} (${poem.year})
@@ -74,7 +89,7 @@ ${versionsLine}
 
 # Calibration for this audience
 ${audienceGuidance}
-${topicsBlock}
+${topicsBlock}${lengthsBlock}
 # Required output
 Generate EXACTLY ${args.count} discussion question${args.count === 1 ? '' : 's'} as a JSON object:
 
@@ -133,10 +148,11 @@ export async function generateQuestions(args: GenerateArgs, poem: Poem) {
     String(args.count),
     ...args.versionLabels,
     ...(args.topics ?? []),
+    ...(args.lengths ?? []),
   ].join('|');
   const cached = unstable_cache(
     async () => _generate(args, poem),
-    ['generate-questions-v2', cacheKey],
+    ['generate-questions-v3', cacheKey],
     { revalidate: 60 * 60 * 24 * 7, tags: ['questions'] } // 1 week
   );
   return cached();
