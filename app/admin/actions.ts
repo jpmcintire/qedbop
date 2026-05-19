@@ -10,6 +10,7 @@ import {
   type FetchResult,
   type SearchResult,
 } from '@/lib/youtube';
+import { MODELS, type Component } from '@/lib/model-config';
 
 const SaveSchema = z.object({
   youtubeId: z.string().min(1),
@@ -216,5 +217,53 @@ export async function detachVideoFromPoem(
   revalidateTag('questions');
   revalidateTag('teacher-edition');
   revalidateTag('topics');
+  return { ok: true };
+}
+
+const VALID_COMPONENTS: Component[] = [
+  'questions',
+  'single-question',
+  'topics',
+  'teacher-edition',
+  'teacher-ask',
+  'concierge',
+];
+
+const ModelOverrideSchema = z.object({
+  component: z.enum(VALID_COMPONENTS as [Component, ...Component[]]),
+  // 'default' means delete the row (use the hardcoded default).
+  model: z.union([z.literal('default'), z.string()]),
+});
+
+export async function setModelOverride(input: z.infer<typeof ModelOverrideSchema>): Promise<SaveResult> {
+  const parsed = ModelOverrideSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues.map((i) => i.message).join('; ') };
+  }
+  try {
+    if (parsed.data.model === 'default') {
+      await prisma.modelSetting.deleteMany({ where: { component: parsed.data.component } });
+    } else {
+      if (!MODELS.some((m) => m.id === parsed.data.model)) {
+        return { ok: false, error: `Unknown model "${parsed.data.model}".` };
+      }
+      await prisma.modelSetting.upsert({
+        where: { component: parsed.data.component },
+        create: { component: parsed.data.component, model: parsed.data.model },
+        update: { model: parsed.data.model },
+      });
+    }
+  } catch (err) {
+    console.error('[admin/model] DB write failed:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'DB write failed' };
+  }
+  // Bust the affected caches so the next call picks up the new model.
+  try {
+    revalidateTag('questions');
+    revalidateTag('teacher-edition');
+    revalidateTag('topics');
+  } catch {
+    // not fatal
+  }
   return { ok: true };
 }

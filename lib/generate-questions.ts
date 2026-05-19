@@ -1,11 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { recordUsage } from './api-usage';
+import { getModelFor } from './model-config';
 import { unstable_cache } from 'next/cache';
 import { z } from 'zod';
 import type { Poem, Version } from './poems';
 import { versionPromptBlock } from './poems';
-
-const MODEL = 'claude-opus-4-7';
 
 const AUDIENCE_GUIDANCE: Record<string, string> = {
   'middle-school':
@@ -113,9 +112,10 @@ Return only the JSON object. No prose, no fences.`;
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not set');
 
+  const model = await getModelFor('questions');
   const client = new Anthropic({ apiKey });
   const response = await client.messages.create({
-    model: MODEL,
+    model,
     max_tokens: 2048,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userPrompt }],
@@ -123,7 +123,7 @@ Return only the JSON object. No prose, no fences.`;
 
   await recordUsage({
     generator: 'questions',
-    model: MODEL,
+    model,
     usage: response.usage,
     poemSlug: poem.slug,
     audience: args.audience,
@@ -265,9 +265,10 @@ Return JSON: {"question": "..."}
 No prose, no fences.`;
 
   try {
+    const model = await getModelFor('single-question');
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
-      model: MODEL,
+      model,
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
@@ -275,7 +276,7 @@ No prose, no fences.`;
 
     await recordUsage({
       generator: 'single-question',
-      model: MODEL,
+      model,
       usage: response.usage,
       poemSlug: poem.slug,
       audience: args.audience,

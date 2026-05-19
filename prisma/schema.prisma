@@ -94,3 +94,16 @@ model ApiUsage {
   @@index([generator, createdAt])
   @@index([poemSlug])
 }
+
+// Per-component model override. One row per generator. When no row
+// exists, lib/model-config.ts returns the hardcoded default. Editable
+// from the model picker on /admin/usage so we can drop cheap features
+// to Sonnet/Haiku and keep the question generators on Opus.
+model ModelSetting {
+  // Component key: 'questions' | 'single-question' | 'topics' |
+  // 'teacher-edition' | 'teacher-ask' | 'concierge'
+  component String   @id
+  model     String
+
+  updatedAt DateTime @updatedAt
+}

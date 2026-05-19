@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { POEMS } from '@/lib/poems';
+import {
+  MODELS,
+  DEFAULT_MODEL,
+  COMPONENT_LABELS,
+  type Component,
+} from '@/lib/model-config';
+import { ModelPicker } from './ModelPicker';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,11 +36,19 @@ const GENERATOR_LABEL: Record<string, string> = {
   topics: 'Topic options',
   'teacher-edition': 'Teacher edition',
   'teacher-ask': 'Teacher chat',
+  concierge: 'Concierge',
 };
 
 export default async function UsagePage() {
   let rows: Row[] = [];
   let dbError: string | null = null;
+  let overrides: Map<string, string> = new Map();
+  try {
+    const settings = await prisma.modelSetting.findMany();
+    overrides = new Map(settings.map((s) => [s.component, s.model]));
+  } catch (err) {
+    console.error('[usage] modelSetting read failed:', err);
+  }
   try {
     rows = await prisma.apiUsage.findMany({
       orderBy: { createdAt: 'desc' },
@@ -157,6 +172,35 @@ export default async function UsagePage() {
           <Card label="Last 30 days" value={fmtUsd(cost30d)} />
           <Card label="All time" value={fmtUsd(costAllTime)} />
           <Card label="Cache hit (30d)" value={`${cacheHitPct.toFixed(1)}%`} />
+        </div>
+      </section>
+
+      <section style={{ marginBottom: '2.5rem' }}>
+        <h2 style={sectionHeading}>Model selection</h2>
+        <p
+          style={{
+            color: 'var(--muted)',
+            fontSize: '0.8125rem',
+            margin: '0 0 0.875rem 0',
+            fontStyle: 'italic',
+            maxWidth: '46rem',
+          }}
+        >
+          Pick which Claude model handles each feature. Defaults are tuned for cost
+          and quality; question generators stay on Opus where the four rules matter.
+          Changes take effect on the next generation.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {(Object.keys(COMPONENT_LABELS) as Component[]).map((c) => (
+            <ModelPicker
+              key={c}
+              component={c}
+              label={COMPONENT_LABELS[c]}
+              defaultModel={DEFAULT_MODEL[c]}
+              currentOverride={overrides.get(c)}
+              options={MODELS.map((m) => ({ id: m.id, label: m.label }))}
+            />
+          ))}
         </div>
       </section>
 

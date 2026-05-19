@@ -1,9 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { recordUsage } from './api-usage';
+import { getModelFor } from './model-config';
 import type { Poem, Version } from './poems';
 import { versionPromptBlock } from './poems';
-
-const MODEL = 'claude-opus-4-7';
 
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
@@ -97,9 +96,10 @@ export async function askTeacher({
   if (history[history.length - 1].role !== 'user') return null;
 
   try {
+    const model = await getModelFor('teacher-ask');
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
-      model: MODEL,
+      model,
       max_tokens: 1500,
       system: buildSystemPrompt(poem, audience, versions, questions),
       messages: history.map((m) => ({ role: m.role, content: m.content })),
@@ -107,7 +107,7 @@ export async function askTeacher({
 
     await recordUsage({
       generator: 'teacher-ask',
-      model: MODEL,
+      model,
       usage: response.usage,
       poemSlug: poem.slug,
       audience,
