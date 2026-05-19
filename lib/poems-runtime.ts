@@ -16,7 +16,18 @@ export async function getPoemEnriched(slug: string): Promise<Poem | undefined> {
   const poem = POEMS.find((p) => p.slug === slug);
   if (!poem) return undefined;
 
-  const youtubeIds = poem.versions.map((v) => v.youtubeId);
+  let attached: Array<{ youtubeId: string; label: string | null; position: number }> = [];
+  try {
+    attached = await prisma.poemVideo.findMany({
+      where: { poemSlug: slug },
+      orderBy: { position: 'asc' },
+      select: { youtubeId: true, label: true, position: true },
+    });
+  } catch (err) {
+    console.error('[poems-runtime] poem-video read failed:', err);
+  }
+
+  const youtubeIds = [...poem.versions.map((v) => v.youtubeId), ...attached.map((a) => a.youtubeId)];
   let annotations: Array<{
     youtubeId: string;
     label: string | null;
@@ -42,7 +53,7 @@ export async function getPoemEnriched(slug: string): Promise<Poem | undefined> {
 
   const byId = new Map(annotations.map((a) => [a.youtubeId, a]));
 
-  const enrichedVersions: Version[] = poem.versions.map((v) => {
+  const staticEnriched: Version[] = poem.versions.map((v) => {
     const a = byId.get(v.youtubeId);
     if (!a) return v;
     return {
@@ -57,6 +68,26 @@ export async function getPoemEnriched(slug: string): Promise<Poem | undefined> {
       teacherNotes: a.teacherNotes ?? v.teacherNotes,
     };
   });
+
+  // DB-attached videos. Annotation values still win; the PoemVideo row
+  // itself only provides youtubeId + a starting label.
+  const attachedEnriched: Version[] = attached.map((row, i) => {
+    const a = byId.get(row.youtubeId);
+    const fallbackLabel = row.label ?? `Version ${poem.versions.length + i + 1}`;
+    return {
+      label: a?.label ?? fallbackLabel,
+      youtubeId: row.youtubeId,
+      durationSeconds: a?.durationSeconds ?? undefined,
+      genre: a?.genre ?? undefined,
+      vocalCharacter: a?.vocalCharacter ?? undefined,
+      artist: a?.artist ?? undefined,
+      recordingYear: a?.recordingYear ?? undefined,
+      themes: a?.themes ?? undefined,
+      teacherNotes: a?.teacherNotes ?? undefined,
+    };
+  });
+
+  const enrichedVersions: Version[] = [...staticEnriched, ...attachedEnriched];
 
   let poetSpecialFacts: string | undefined;
   try {
@@ -114,6 +145,10 @@ export async function getVideoEditState(youtubeId: string): Promise<{
   poemSlug: string;
   poemTitle: string;
   staticVersion: Version;
+  // True when the video lives in PoemVideo (admin-attached) rather than
+  // in lib/poems.ts. The edit form uses this to show a "Remove from
+  // poem" button instead of "Revert to defaults."
+  isAttached: boolean;
   dbAnnotation: {
     label: string | null;
     durationSeconds: number | null;
@@ -125,32 +160,57 @@ export async function getVideoEditState(youtubeId: string): Promise<{
     teacherNotes: string | null;
   } | null;
 } | null> {
+  let dbRow: Awaited<ReturnType<typeof prisma.videoAnnotation.findUnique>> = null;
+  try {
+    dbRow = await prisma.videoAnnotation.findUnique({ where: { youtubeId } });
+  } catch (err) {
+    console.error('[poems-runtime] DB read failed:', err);
+  }
+  const dbAnnotation = dbRow
+    ? {
+        label: dbRow.label,
+        durationSeconds: dbRow.durationSeconds,
+        genre: dbRow.genre,
+        vocalCharacter: dbRow.vocalCharacter,
+        artist: dbRow.artist,
+        recordingYear: dbRow.recordingYear,
+        themes: dbRow.themes,
+        teacherNotes: dbRow.teacherNotes,
+      }
+    : null;
+
   for (const poem of POEMS) {
     const v = poem.versions.find((vv) => vv.youtubeId === youtubeId);
     if (!v) continue;
-    let dbRow: Awaited<ReturnType<typeof prisma.videoAnnotation.findUnique>> = null;
-    try {
-      dbRow = await prisma.videoAnnotation.findUnique({ where: { youtubeId } });
-    } catch (err) {
-      console.error('[poems-runtime] DB read failed:', err);
-    }
     return {
       poemSlug: poem.slug,
       poemTitle: poem.title,
       staticVersion: v,
-      dbAnnotation: dbRow
-        ? {
-            label: dbRow.label,
-            durationSeconds: dbRow.durationSeconds,
-            genre: dbRow.genre,
-            vocalCharacter: dbRow.vocalCharacter,
-            artist: dbRow.artist,
-            recordingYear: dbRow.recordingYear,
-            themes: dbRow.themes,
-            teacherNotes: dbRow.teacherNotes,
-          }
-        : null,
+      isAttached: false,
+      dbAnnotation,
     };
+  }
+
+  // Not in lib/poems.ts — check PoemVideo for an admin-attached row.
+  try {
+    const attached = await prisma.poemVideo.findFirst({ where: { youtubeId } });
+    if (attached) {
+      const poem = POEMS.find((p) => p.slug === attached.poemSlug);
+      if (poem) {
+        return {
+          poemSlug: poem.slug,
+          poemTitle: poem.title,
+          staticVersion: {
+            label: attached.label ?? `Version ${poem.versions.length + 1}`,
+            youtubeId,
+          },
+          isAttached: true,
+          dbAnnotation,
+        };
+      }
+    }
+  } catch (err) {
+    console.error('[poems-runtime] PoemVideo read failed:', err);
   }
   return null;
 }

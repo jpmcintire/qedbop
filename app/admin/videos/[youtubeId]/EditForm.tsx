@@ -6,6 +6,7 @@ import {
   saveVideoAnnotation,
   clearVideoAnnotation,
   fetchYouTubeMetadata,
+  detachVideoFromPoem,
 } from '../../actions';
 import type { YouTubeVideoMetadata } from '@/lib/youtube';
 
@@ -35,6 +36,11 @@ type Props = {
   youtubeId: string;
   staticDefaults: Defaults;
   dbAnnotation: DbAnnotation;
+  // True when this video is an admin-attached PoemVideo row rather than
+  // a static entry in lib/poems.ts. Toggles the "Revert" vs "Remove from
+  // poem" button at the bottom of the form.
+  isAttached: boolean;
+  poemSlug: string;
 };
 
 // Pre-fill each field from the DB row if present, else from the static
@@ -53,7 +59,13 @@ function initialFrom(staticDefaults: Defaults, db: DbAnnotation) {
   };
 }
 
-export function EditForm({ youtubeId, staticDefaults, dbAnnotation }: Props) {
+export function EditForm({
+  youtubeId,
+  staticDefaults,
+  dbAnnotation,
+  isAttached,
+  poemSlug,
+}: Props) {
   const router = useRouter();
   const initial = initialFrom(staticDefaults, dbAnnotation);
   const [label, setLabel] = useState(initial.label);
@@ -116,6 +128,22 @@ export function EditForm({ youtubeId, staticDefaults, dbAnnotation }: Props) {
       if (res.ok) {
         setStatus('Saved. Next AI generation uses the new values.');
         router.refresh();
+      } else {
+        setError(res.error);
+      }
+    });
+  }
+
+  function removeFromPoem() {
+    if (!confirm('Remove this video from the poem? Its annotation (genre, themes, etc.) is preserved in case you re-attach it later.')) {
+      return;
+    }
+    setStatus(null);
+    setError(null);
+    startTransition(async () => {
+      const res = await detachVideoFromPoem(poemSlug, youtubeId);
+      if (res.ok) {
+        router.push('/admin');
       } else {
         setError(res.error);
       }
@@ -269,7 +297,7 @@ These ARE used in teacher-edition rendering (agenda, per-question commentary) an
         >
           {pending ? 'Saving…' : 'Save'}
         </button>
-        {dbAnnotation && (
+        {dbAnnotation && !isAttached && (
           <button
             type="button"
             onClick={revertToDefaults}
@@ -277,6 +305,17 @@ These ARE used in teacher-edition rendering (agenda, per-question commentary) an
             className="btn btn-ghost"
           >
             Revert to lib/poems.ts defaults
+          </button>
+        )}
+        {isAttached && (
+          <button
+            type="button"
+            onClick={removeFromPoem}
+            disabled={pending}
+            className="btn btn-ghost"
+            style={{ color: '#a33' }}
+          >
+            Remove from poem
           </button>
         )}
         {status && <span className="chrome" style={{ color: 'var(--ink)' }}>{status}</span>}

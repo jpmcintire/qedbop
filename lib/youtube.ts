@@ -134,3 +134,126 @@ export function parseIsoDurationToSeconds(iso: string): number | null {
   const s = match[3] ? parseInt(match[3], 10) : 0;
   return h * 3600 + m * 60 + s;
 }
+
+const SearchListResponse = z.object({
+  items: z.array(
+    z.object({
+      id: z.object({ videoId: z.string() }),
+      snippet: z.object({
+        title: z.string(),
+        channelTitle: z.string(),
+        channelId: z.string(),
+        publishedAt: z.string(),
+        description: z.string().optional(),
+      }),
+    })
+  ),
+});
+
+export type YouTubeSearchHit = YouTubeVideoMetadata & {
+  description: string;
+};
+
+export type SearchResult =
+  | { ok: true; hits: YouTubeSearchHit[] }
+  | { ok: false; error: string };
+
+// Search YouTube by free-text query and return rich per-video metadata
+// (duration, view count, etc.). Combines two API calls: search.list
+// (which is shallow) and videos.list (for the details on each hit).
+// Quota cost: 100 units for search + 1 for the videos lookup, well
+// under the 10k/day default.
+export async function searchVideos(query: string, maxResults = 12): Promise<SearchResult> {
+  const trimmed = query.trim();
+  if (!trimmed) return { ok: false, error: 'Empty query.' };
+
+  const key = process.env.YOUTUBE_API_KEY;
+  if (!key) return { ok: false, error: 'YOUTUBE_API_KEY is not configured on the server.' };
+
+  const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search');
+  searchUrl.searchParams.set('part', 'snippet');
+  searchUrl.searchParams.set('type', 'video');
+  searchUrl.searchParams.set('q', trimmed);
+  searchUrl.searchParams.set('maxResults', String(Math.max(1, Math.min(maxResults, 25))));
+  searchUrl.searchParams.set('key', key);
+
+  let searchRes: Response;
+  try {
+    searchRes = await fetch(searchUrl, { cache: 'no-store' });
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Network error reaching YouTube.' };
+  }
+  if (!searchRes.ok) {
+    const body = await searchRes.text().catch(() => '');
+    return { ok: false, error: `YouTube search responded ${searchRes.status}: ${body.slice(0, 200)}` };
+  }
+
+  let searchJson: unknown;
+  try {
+    searchJson = await searchRes.json();
+  } catch {
+    return { ok: false, error: 'YouTube search returned non-JSON.' };
+  }
+  const parsed = SearchListResponse.safeParse(searchJson);
+  if (!parsed.success) {
+    return { ok: false, error: 'Unexpected YouTube search response shape.' };
+  }
+  if (parsed.data.items.length === 0) {
+    return { ok: true, hits: [] };
+  }
+
+  const descById = new Map(
+    parsed.data.items.map((it) => [it.id.videoId, it.snippet.description ?? ''])
+  );
+  const ids = parsed.data.items.map((it) => it.id.videoId);
+
+  // Hydrate with duration + stats. videos.list accepts comma-joined ids.
+  const detailsUrl = new URL('https://www.googleapis.com/youtube/v3/videos');
+  detailsUrl.searchParams.set('part', 'snippet,contentDetails,statistics');
+  detailsUrl.searchParams.set('id', ids.join(','));
+  detailsUrl.searchParams.set('key', key);
+
+  let detailsRes: Response;
+  try {
+    detailsRes = await fetch(detailsUrl, { cache: 'no-store' });
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Network error reaching YouTube.' };
+  }
+  if (!detailsRes.ok) {
+    const body = await detailsRes.text().catch(() => '');
+    return { ok: false, error: `YouTube videos.list responded ${detailsRes.status}: ${body.slice(0, 200)}` };
+  }
+  const detailsJson = await detailsRes.json().catch(() => null);
+  const detailsParsed = VideoListResponse.safeParse(detailsJson);
+  if (!detailsParsed.success) {
+    return { ok: false, error: 'Unexpected YouTube videos.list response shape.' };
+  }
+
+  // Preserve search order, not videos.list order.
+  const byId = new Map(detailsParsed.data.items.map((it) => [it.id, it]));
+  const hits: YouTubeSearchHit[] = [];
+  for (const id of ids) {
+    const item = byId.get(id);
+    if (!item) continue;
+    const seconds = parseIsoDurationToSeconds(item.contentDetails.duration);
+    if (seconds == null) continue;
+    const thumbs = item.snippet.thumbnails ?? {};
+    hits.push({
+      youtubeId: item.id,
+      title: item.snippet.title,
+      channelTitle: item.snippet.channelTitle,
+      channelId: item.snippet.channelId,
+      publishedAt: item.snippet.publishedAt,
+      durationSeconds: seconds,
+      thumbnailUrl:
+        thumbs.maxres?.url ?? thumbs.high?.url ?? thumbs.medium?.url ?? thumbs.default?.url ?? null,
+      viewCount: item.statistics?.viewCount ? parseInt(item.statistics.viewCount, 10) : null,
+      likeCount: item.statistics?.likeCount ? parseInt(item.statistics.likeCount, 10) : null,
+      commentCount: item.statistics?.commentCount
+        ? parseInt(item.statistics.commentCount, 10)
+        : null,
+      description: descById.get(id) ?? '',
+    });
+  }
+  return { ok: true, hits };
+}

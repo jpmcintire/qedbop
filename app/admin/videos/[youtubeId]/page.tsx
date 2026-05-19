@@ -60,6 +60,8 @@ export default async function EditVideoPage({ params }: Props) {
 
       <EditForm
         youtubeId={state.staticVersion.youtubeId}
+        poemSlug={state.poemSlug}
+        isAttached={state.isAttached}
         staticDefaults={{
           label: state.staticVersion.label,
           durationSeconds: state.staticVersion.durationSeconds ?? null,

@@ -13,6 +13,12 @@ export default async function AdminPage() {
   // Pull all annotation rows so the list can show which videos have been
   // edited vs. which still rely on static defaults.
   let annotations: Array<{ youtubeId: string; updatedAt: Date }> = [];
+  let attached: Array<{
+    poemSlug: string;
+    youtubeId: string;
+    label: string | null;
+    position: number;
+  }> = [];
   try {
     annotations = await prisma.videoAnnotation.findMany({
       select: { youtubeId: true, updatedAt: true },
@@ -20,8 +26,21 @@ export default async function AdminPage() {
   } catch (err) {
     console.error('[admin] DB read failed:', err);
   }
+  try {
+    attached = await prisma.poemVideo.findMany({
+      orderBy: { position: 'asc' },
+      select: { poemSlug: true, youtubeId: true, label: true, position: true },
+    });
+  } catch (err) {
+    console.error('[admin] PoemVideo read failed:', err);
+  }
 
   const edited = new Map(annotations.map((a) => [a.youtubeId, a.updatedAt]));
+  const attachedByPoem = new Map<string, typeof attached>();
+  for (const row of attached) {
+    if (!attachedByPoem.has(row.poemSlug)) attachedByPoem.set(row.poemSlug, []);
+    attachedByPoem.get(row.poemSlug)!.push(row);
+  }
 
   return (
     <main className="page">
@@ -68,16 +87,7 @@ export default async function AdminPage() {
                 <li key={v.youtubeId}>
                   <Link
                     href={`/admin/videos/${v.youtubeId}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.75rem 1rem',
-                      border: '1px solid var(--rule)',
-                      borderRadius: '0.5rem',
-                      textDecoration: 'none',
-                      color: 'var(--ink)',
-                    }}
+                    style={rowStyle}
                   >
                     <span>
                       <span style={{ fontFamily: 'Georgia, serif', fontSize: '1.0625rem' }}>
@@ -96,9 +106,60 @@ export default async function AdminPage() {
                 </li>
               );
             })}
+            {(attachedByPoem.get(poem.slug) ?? []).map((row, i) => {
+              const editedAt = edited.get(row.youtubeId);
+              const displayLabel = row.label ?? `Version ${poem.versions.length + i + 1}`;
+              return (
+                <li key={row.youtubeId}>
+                  <Link href={`/admin/videos/${row.youtubeId}`} style={rowStyle}>
+                    <span>
+                      <span style={{ fontFamily: 'Georgia, serif', fontSize: '1.0625rem' }}>
+                        {displayLabel}
+                      </span>
+                      <span className="chrome" style={{ marginLeft: '0.75rem' }}>
+                        youtu.be/{row.youtubeId}
+                      </span>
+                      <span
+                        className="chrome"
+                        style={{ marginLeft: '0.5rem', fontStyle: 'italic' }}
+                      >
+                        attached
+                      </span>
+                    </span>
+                    <span className="chrome" style={{ color: editedAt ? 'var(--ink)' : 'var(--muted)' }}>
+                      {editedAt ? `Edited ${editedAt.toLocaleDateString()}` : 'Defaults only'}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+            <li>
+              <Link
+                href={`/admin/poems/${poem.slug}/add-video`}
+                style={{
+                  ...rowStyle,
+                  borderStyle: 'dashed',
+                  color: 'var(--muted)',
+                  justifyContent: 'center',
+                }}
+              >
+                + Add a video to this poem
+              </Link>
+            </li>
           </ul>
         </section>
       ))}
     </main>
   );
 }
+
+const rowStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '0.75rem 1rem',
+  border: '1px solid var(--rule)',
+  borderRadius: '0.5rem',
+  textDecoration: 'none',
+  color: 'var(--ink)',
+};
