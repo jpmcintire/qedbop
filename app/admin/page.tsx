@@ -64,9 +64,14 @@ export default async function AdminPage() {
           Edit per-poet special facts →
         </Link>
       </p>
-      <p style={{ marginBottom: '2rem' }}>
+      <p style={{ marginBottom: '0.5rem' }}>
         <Link href="/admin/usage" className="chrome" style={{ color: 'var(--ink)' }}>
           API usage and cost →
+        </Link>
+      </p>
+      <p style={{ marginBottom: '2rem' }}>
+        <Link href="/admin/channel" className="chrome" style={{ color: 'var(--ink)' }}>
+          YouTube channel — browse &amp; attach videos →
         </Link>
       </p>
 

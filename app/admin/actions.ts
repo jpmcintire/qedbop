@@ -11,6 +11,22 @@ import {
   type SearchResult,
 } from '@/lib/youtube';
 import { MODELS, type Component } from '@/lib/model-config';
+import { logIn, logOut, requireAdmin } from '@/lib/admin-auth';
+import { disconnect as disconnectYouTubeToken } from '@/lib/youtube-oauth';
+
+export async function adminLogin(password: string): Promise<{ ok: boolean }> {
+  const ok = await logIn(password);
+  return { ok };
+}
+
+export async function adminLogout(): Promise<void> {
+  await logOut();
+}
+
+export async function disconnectYouTube(): Promise<void> {
+  await requireAdmin();
+  await disconnectYouTubeToken();
+}
 
 const SaveSchema = z.object({
   youtubeId: z.string().min(1),
