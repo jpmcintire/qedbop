@@ -36,8 +36,14 @@ export default async function AdminPage() {
         <p className="chrome" style={{ marginTop: '0.25rem' }}>Admin · Videos</p>
       </header>
 
-      <p style={{ color: 'var(--muted)', maxWidth: '46rem', marginBottom: '2rem' }}>
+      <p style={{ color: 'var(--muted)', maxWidth: '46rem', marginBottom: '1rem' }}>
         Edit per-video annotations: genre, duration, vocal character, artist, year, interpretive themes (safe for student-facing AI), and teacher-only timestamped notes (used only in teacher edition + chat). Changes take effect on next AI generation; existing cached generations bust automatically when the underlying data changes.
+      </p>
+
+      <p style={{ marginBottom: '2rem' }}>
+        <Link href="/admin/poets" className="chrome" style={{ color: 'var(--ink)' }}>
+          Edit per-poet special facts →
+        </Link>
       </p>
 
       {POEMS.map((poem) => (

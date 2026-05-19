@@ -88,13 +88,20 @@ async function _generate(
       ? 'HISTORICAL CONTEXT: 2-3 paragraphs. Cover the poem\'s historical moment, the cultural setting of the musical adaptation(s), and any meaningful interpretive or reception history.'
       : 'HISTORICAL CONTEXT: 1-2 paragraphs. Cover the poem\'s moment and (briefly) the cultural setting of the musical adaptation(s).';
 
+  const specialFactsBlock = poem.poetSpecialFacts?.trim()
+    ? `\n# Curated special facts about the poet (teacher-supplied)
+Weave these into the poet bio and historical context where they fit. Don't list them mechanically — integrate them. Don't contradict them.
+
+${poem.poetSpecialFacts.trim()}\n`
+    : '';
+
   const userPrompt = `# Poem
 ${poem.title} — ${poem.author} (${poem.year})
 
 """
 ${poem.text}
 """
-
+${specialFactsBlock}
 # Audience
 ${audienceText}
 
@@ -198,6 +205,7 @@ export async function generateTeacherEdition(
     overrides.agendaMinutes ? `am=${overrides.agendaMinutes}` : 'am=auto',
     `bd=${overrides.bioDepth ?? 'short'}`,
     `cd=${overrides.contextDepth ?? 'short'}`,
+    `psf=${poem.poetSpecialFacts ?? ''}`,
     ...versions.map(versionFullCacheKey),
     ...questions,
   ].join('|');

@@ -28,6 +28,13 @@ function buildSystemPrompt(
           .join('\n\n')
       : '(no settings in the assignment)';
 
+  const specialFactsBlock = poem.poetSpecialFacts?.trim()
+    ? `\n# Curated special facts about the poet (teacher-supplied)
+The teacher has flagged these facts as important context about ${poem.author}. Treat them as authoritative — weave them in when relevant; don't contradict them.
+
+${poem.poetSpecialFacts.trim()}\n`
+    : '';
+
   return `You are a teaching assistant for qed'bop, a platform that pairs public-domain poems with musical settings on YouTube. A teacher is preparing to lead a class on the poem below and is asking you questions to deepen their own understanding or to think through how to teach it.
 
 # Poem the teacher is teaching
@@ -37,7 +44,7 @@ Author: ${poem.author} (${poem.year})
 """
 ${poem.text}
 """
-
+${specialFactsBlock}
 # Teacher's audience
 ${audienceText}
 
