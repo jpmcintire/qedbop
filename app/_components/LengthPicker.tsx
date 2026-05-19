@@ -19,7 +19,7 @@ export function LengthPicker({ options, selected, toggle }: Props) {
           maxWidth: '38rem',
         }}
       >
-        Check the response lengths you want. Claude calibrates question
+        Check the response lengths you want. qed&rsquo;bop calibrates question
         complexity to match. Pick one for a uniform assignment; pick several
         for a mix.
       </p>

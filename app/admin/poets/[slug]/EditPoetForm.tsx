@@ -72,17 +72,17 @@ export function EditPoetForm({ slug, displayName, initialSpecialFacts, hasDbRow 
           value={specialFacts}
           onChange={(e) => setSpecialFacts(e.target.value)}
           rows={12}
-          placeholder={`Curated facts about this poet you want the AI to weave into the teacher-edition bio, historical context, and chat answers. Examples:
+          placeholder={`Curated facts about this poet you want qed’bop to weave into the teacher-edition bio, historical context, and chat answers. Examples:
 
 - A specific influence or relationship not in standard biographies
 - A primary-source quote you've found useful in class
 - A correction to a common misreading
 - Local / archival material you want surfaced
 
-The AI generates the standard bio on its own — this is for what only you know or want emphasized.`}
+qed’bop generates the standard bio on its own — this is for what only you know or want emphasized.`}
           style={{ ...inputStyle, fontFamily: 'Georgia, serif', lineHeight: 1.6 }}
         />
-        <Help>Shown to Claude during teacher-edition generation and teacher chat for any poem by this poet. Never used in student-facing question generation.</Help>
+        <Help>Shown to qed&rsquo;bop during teacher-edition generation and teacher chat for any poem by this poet. Never used in student-facing question generation.</Help>
       </Group>
 
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

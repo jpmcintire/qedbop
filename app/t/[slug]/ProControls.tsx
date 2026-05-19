@@ -2,12 +2,15 @@
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
+import { POEMS } from '@/lib/poems';
+import { LoadingMessages } from '@/app/_components/LoadingMessages';
 
 type Props = {
   isPro: boolean;
   agendaMinutes: number | undefined;
   bioDepth: 'short' | 'expanded';
   contextDepth: 'short' | 'expanded';
+  slug: string;
 };
 
 const MINUTE_OPTIONS = [30, 45, 60, 75, 90, 120];
@@ -20,11 +23,13 @@ export function ProControls({
   agendaMinutes,
   bioDepth,
   contextDepth,
+  slug,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
   const [pending, startTransition] = useTransition();
+  const poem = POEMS.find((p) => p.slug === slug);
 
   function updateParams(updates: Record<string, string | null>) {
     const next = new URLSearchParams(sp.toString());
@@ -181,8 +186,9 @@ export function ProControls({
           </Control>
 
           {pending && (
-            <p className="chrome" style={{ color: 'var(--muted)', fontStyle: 'italic' }}>
-              Updating&hellip; Claude is regenerating the affected sections.
+            <p className="chrome" style={{ color: 'var(--muted)' }}>
+              qed&rsquo;bop is regenerating the affected sections.{' '}
+              <LoadingMessages poem={poem} />
             </p>
           )}
         </div>

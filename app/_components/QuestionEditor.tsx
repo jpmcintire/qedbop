@@ -2,6 +2,9 @@
 // Pure presentation — all generation calls and state ownership live in
 // the parent (the builder page).
 
+import { LoadingMessages } from './LoadingMessages';
+import type { Poem } from '@/lib/poems';
+
 type Props = {
   edited: string[];
   editQuestion: (index: number, value: string) => void;
@@ -12,6 +15,7 @@ type Props = {
   generatingCustom: boolean;
   customError: string | null;
   canAddCustom: boolean;
+  poem?: Poem | null;
 };
 
 export function QuestionEditor({
@@ -24,6 +28,7 @@ export function QuestionEditor({
   generatingCustom,
   customError,
   canAddCustom,
+  poem,
 }: Props) {
   return (
     <>
@@ -93,8 +98,8 @@ export function QuestionEditor({
             marginBottom: '0.75rem',
           }}
         >
-          Describe what you want the next question to be about. Claude will
-          generate one question that fits alongside the others without
+          Describe what you want the next question to be about. qed&rsquo;bop
+          will generate one question that fits alongside the others without
           repeating them.
         </p>
         <textarea
@@ -123,8 +128,11 @@ export function QuestionEditor({
             className="btn"
             disabled={!customInput.trim() || generatingCustom || !canAddCustom}
           >
-            {generatingCustom ? 'Generating…' : 'Generate question'}
+            {generatingCustom ? 'qed’bop is thinking…' : 'Generate question'}
           </button>
+          {generatingCustom && (
+            <LoadingMessages poem={poem} style={{ fontSize: '0.8125rem' }} />
+          )}
           {customError && (
             <span style={{ color: '#a33', fontSize: '0.8125rem' }}>
               {customError}

@@ -126,7 +126,7 @@ export function EditForm({
         teacherNotes: teacherNotes || null,
       });
       if (res.ok) {
-        setStatus('Saved. Next AI generation uses the new values.');
+        setStatus('Saved. Next time qed’bop generates, it uses the new values.');
         router.refresh();
       } else {
         setError(res.error);
@@ -262,15 +262,15 @@ export function EditForm({
         />
       </Group>
 
-      <Group label="Interpretive themes (safe — used in student-facing AI output)">
+      <Group label="Interpretive themes (safe — used in student-facing qed’bop output)">
         <textarea
           value={themes}
           onChange={(e) => setThemes(e.target.value)}
           rows={8}
-          placeholder="Broader notes about what the music argues about the poem. What does the arrangement emphasize or subvert? What does the genre carry, culturally? NO timestamps. NO specific moment descriptions. This is what Claude sees when generating questions students will read."
+          placeholder="Broader notes about what the music argues about the poem. What does the arrangement emphasize or subvert? What does the genre carry, culturally? NO timestamps. NO specific moment descriptions. This is what qed’bop sees when generating questions students will read."
           style={{ ...inputStyle, fontFamily: 'Georgia, serif', lineHeight: 1.6 }}
         />
-        <Help>This text is fed to Claude when generating student questions. Keep it interpretive — never describe a specific moment students should find.</Help>
+        <Help>This text is fed to qed&rsquo;bop when generating student questions. Keep it interpretive — never describe a specific moment students should find.</Help>
       </Group>
 
       <Group label="Teacher-only notes (privileged — never sent to student-facing AI)">
@@ -285,7 +285,7 @@ export function EditForm({
 These ARE used in teacher-edition rendering (agenda, per-question commentary) and teacher chat answers, but NEVER in student questions.`}
           style={{ ...inputStyle, fontFamily: 'Georgia, serif', lineHeight: 1.6 }}
         />
-        <Help>Only Claude sees this when generating teacher-edition content or answering teacher chat questions. Free to include timestamps and specific moments here.</Help>
+        <Help>Only qed&rsquo;bop sees this when generating teacher-edition content or answering teacher chat questions. Free to include timestamps and specific moments here.</Help>
       </Group>
 
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

@@ -70,6 +70,13 @@ export type Poem = {
   // generating poet bio, historical context, and teacher chat answers.
   // Not present in the static catalog.
   poetSpecialFacts?: string;
+
+  // Playful per-poem messages cycled through the loading indicator while
+  // qed'bop is generating. Each one is an inside joke about the poem.
+  // Optional — poems without a list fall back to a generic poetry pool.
+  // 4-6 short strings work best; the brand closer is always appended
+  // after these by buildLoadingMessages.
+  loadingMessages?: string[];
 };
 
 // Stable slug for a poet, derived from the author name as it appears in
@@ -166,6 +173,12 @@ And we gave her all our money but our subway fares.`,
       'Millay published this in 1919, when she was 27 and living in Greenwich Village. How might knowing that change your reading?',
       'Choose one of the two musical settings and describe a specific moment — a tempo change, an instrumentation shift, a vocal choice — that argues for a particular interpretation of the poem.',
     ],
+    loadingMessages: [
+      'Riding the ferry…',
+      'Debating with Millay…',
+      'Burning the candle at both ends…',
+      'Counting the apples and pears…',
+    ],
   },
   {
     slug: 'stopping-by-woods',
@@ -214,6 +227,11 @@ And miles to go before I sleep.`,
       'What is "the darkest evening of the year"? What does that specificity add?',
       'Listen for where the music gets quietest. Does that moment correspond to the most ambiguous line in the poem?',
       'Frost called this poem "my best bid for remembrance." What about it might endure?',
+    ],
+    loadingMessages: [
+      'Watching the woods fill up…',
+      'Asking the horse…',
+      'Miles to go…',
     ],
   },
 ];

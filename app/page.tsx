@@ -24,7 +24,7 @@ export default function Landing() {
         <p style={{ fontSize: '1.0625rem', lineHeight: 1.7, marginBottom: '1rem' }}>
           qed&rsquo;bop builds shareable lessons around public-domain poems that
           have been set to music. Pick a poem, pick one or more recorded settings,
-          and Claude drafts discussion questions calibrated to your audience.
+          and qed&rsquo;bop drafts discussion questions calibrated to your audience.
         </p>
         <p style={{ fontSize: '1.0625rem', lineHeight: 1.7, marginBottom: '1rem' }}>
           The questions stay deliberately general about the music — never

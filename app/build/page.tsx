@@ -26,6 +26,7 @@ import {
   LengthPicker,
   QuestionEditor,
   BasicGenerate,
+  LoadingMessages,
 } from '../_components';
 
 export default function Page() {
@@ -387,6 +388,7 @@ function BuilderPage() {
           studentUrl={studentUrl}
           teacherUrl={teacherUrl}
           expiration={expiration}
+          poem={poem}
         />
       ) : (
         <>
@@ -402,6 +404,7 @@ function BuilderPage() {
               setCustomInput={setCustomTopicInput}
               addCustom={addCustomTopic}
               removeCustom={removeCustomTopic}
+              poem={poem}
             />
           </Step>
 
@@ -448,11 +451,16 @@ function BuilderPage() {
               disabled={!canGenerate}
             >
               {generating
-                ? 'Generating with Claude Opus 4.7…'
+                ? 'qed’bop is thinking…'
                 : edited.length > 0
                   ? 'Regenerate'
                   : 'Generate questions'}
             </button>
+            {generating && (
+              <p style={{ fontSize: '0.875rem', marginTop: '0.75rem' }}>
+                <LoadingMessages poem={poem} />
+              </p>
+            )}
             {generationError && (
               <p style={{ color: '#a33', fontSize: '0.875rem', marginTop: '0.75rem' }}>
                 {generationError}
@@ -477,6 +485,7 @@ function BuilderPage() {
                 generatingCustom={generatingCustom}
                 customError={customQuestionError}
                 canAddCustom={picked.length > 0}
+                poem={poem}
               />
             </Step>
           )}
@@ -532,7 +541,7 @@ function BuilderPage() {
                 />
                 <UrlBlock
                   label="Teacher edition"
-                  description="A supplementary page for you with poet bio, historical context, a suggested class agenda, and per-question teaching commentary. Same expiration as the student URL. First load takes ~15s while Claude generates; cached after."
+                  description="A supplementary page for you with poet bio, historical context, a suggested class agenda, and per-question teaching commentary. Same expiration as the student URL. First load takes ~15s while qed’bop generates; cached after."
                   relativeUrl={teacherUrl}
                 />
                 <UrlBlock

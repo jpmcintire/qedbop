@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { fetchTeacherAsk } from '@/app/actions';
+import { POEMS } from '@/lib/poems';
 import type { ChatMessage } from '@/lib/teacher-ask';
+import { LoadingMessages } from '@/app/_components/LoadingMessages';
 
 type Props = {
   slug: string;
@@ -19,6 +21,7 @@ const SUGGESTIONS = [
 ];
 
 export function TeacherAsk({ slug, audience, versionIds, questions }: Props) {
+  const poem = POEMS.find((p) => p.slug === slug);
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [pending, startTransition] = useTransition();
@@ -52,7 +55,7 @@ export function TeacherAsk({ slug, audience, versionIds, questions }: Props) {
           history: next,
         });
         if (!answer) {
-          setError('Claude did not return an answer. Try rephrasing or asking something else.');
+          setError('qed’bop did not return an answer. Try rephrasing or asking something else.');
           return;
         }
         setHistory((prev) => [...prev, { role: 'assistant', content: answer }]);
@@ -97,9 +100,9 @@ export function TeacherAsk({ slug, audience, versionIds, questions }: Props) {
           marginBottom: '1rem',
         }}
       >
-        Ask Claude anything about this poem, the poet, the period, the musical
-        settings, or how to teach it. Conversation stays on this page; it
-        isn&rsquo;t saved or shared.
+        Ask qed&rsquo;bop anything about this poem, the poet, the period, the
+        musical settings, or how to teach it. Conversation stays on this page;
+        it isn&rsquo;t saved or shared.
       </p>
 
       {history.length === 0 && (
@@ -155,7 +158,7 @@ export function TeacherAsk({ slug, audience, versionIds, questions }: Props) {
                   color: m.role === 'user' ? 'var(--ink)' : 'var(--muted)',
                 }}
               >
-                {m.role === 'user' ? 'You' : 'Claude Opus 4.7'}
+                {m.role === 'user' ? 'You' : 'qed’bop'}
               </p>
               <div
                 style={{
@@ -171,11 +174,8 @@ export function TeacherAsk({ slug, audience, versionIds, questions }: Props) {
             </div>
           ))}
           {pending && (
-            <p
-              className="chrome"
-              style={{ color: 'var(--muted)', fontStyle: 'italic' }}
-            >
-              Claude is thinking&hellip;
+            <p className="chrome" style={{ color: 'var(--muted)' }}>
+              qed&rsquo;bop is thinking&hellip; <LoadingMessages poem={poem} />
             </p>
           )}
         </div>

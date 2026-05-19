@@ -1,3 +1,6 @@
+import { LoadingMessages } from './LoadingMessages';
+import type { Poem } from '@/lib/poems';
+
 type Props = {
   audienceLabel: string;
   loading: boolean;
@@ -9,6 +12,7 @@ type Props = {
   setCustomInput: (s: string) => void;
   addCustom: () => void;
   removeCustom: (t: string) => void;
+  poem?: Poem | null;
 };
 
 // AI-generated topic checkboxes (calibrated to audience) plus an "Other"
@@ -25,11 +29,15 @@ export function TopicPicker({
   setCustomInput,
   addCustom,
   removeCustom,
+  poem,
 }: Props) {
   if (loading) {
     return (
-      <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
-        Loading topic options for {audienceLabel}&hellip;
+      <p style={{ fontSize: '0.875rem' }}>
+        <span style={{ color: 'var(--muted)' }}>
+          qed&rsquo;bop is picking topic options for {audienceLabel}.{' '}
+        </span>
+        <LoadingMessages poem={poem} />
       </p>
     );
   }
@@ -47,8 +55,8 @@ export function TopicPicker({
             }}
           >
             Check any topics you want the question set to cover. Leave all
-            unchecked to let Claude pick freely. These regenerate when you
-            change audience.
+            unchecked to let qed&rsquo;bop pick freely. These regenerate when
+            you change audience.
           </p>
           <ul
             style={{

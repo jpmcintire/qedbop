@@ -11,6 +11,7 @@ import {
 } from '@/lib/generate-teacher-edition';
 import { TeacherAsk } from './TeacherAsk';
 import { ProControls } from './ProControls';
+import { LoadingMessages } from '@/app/_components/LoadingMessages';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -103,6 +104,7 @@ export default async function TeacherPage({ params, searchParams }: Props) {
         agendaMinutes={agendaMinutes}
         bioDepth={bioDepth}
         contextDepth={contextDepth}
+        slug={poem.slug}
       />
 
       <article>
@@ -127,7 +129,7 @@ export default async function TeacherPage({ params, searchParams }: Props) {
           {poem.author} &middot; {poem.year}
         </p>
 
-        <Suspense fallback={<TeacherSectionsLoading />}>
+        <Suspense fallback={<TeacherSectionsLoading poem={poem} />}>
           <TeacherSections
             slug={poem.slug}
             audience={audienceSlug}
@@ -463,11 +465,12 @@ function TeacherSection({ label, children }: { label: string; children: React.Re
   );
 }
 
-function TeacherSectionsLoading() {
+function TeacherSectionsLoading({ poem }: { poem: { loadingMessages?: string[] } }) {
   return (
     <div style={{ marginTop: '2.5rem' }}>
       <p className="chrome" style={{ marginBottom: '0.5rem' }}>
-        Generating teacher-edition content with Claude Opus 4.7&hellip;
+        qed&rsquo;bop is preparing the teacher edition.{' '}
+        <LoadingMessages poem={poem} />
       </p>
       {[80, 65, 75, 60].map((w, i) => (
         <div

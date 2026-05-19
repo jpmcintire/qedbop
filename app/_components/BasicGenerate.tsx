@@ -1,5 +1,7 @@
 import { UrlBlock } from './UrlBlock';
+import { LoadingMessages } from './LoadingMessages';
 import { formatExpirationFriendly } from '@/lib/expiration';
+import type { Poem } from '@/lib/poems';
 
 type Props = {
   ready: boolean;
@@ -10,6 +12,7 @@ type Props = {
   studentUrl: string;
   teacherUrl: string;
   expiration: string;
+  poem?: Poem | null;
 };
 
 // Basic mode's bottom section: a single button that generates and reveals
@@ -23,6 +26,7 @@ export function BasicGenerate({
   studentUrl,
   teacherUrl,
   expiration,
+  poem,
 }: Props) {
   return (
     <section className="hairline" style={{ paddingTop: '1.5rem', marginTop: '1rem' }}>
@@ -34,11 +38,16 @@ export function BasicGenerate({
         style={{ fontSize: '0.9375rem', padding: '0.75rem 1.5rem' }}
       >
         {generating
-          ? 'Generating with Claude Opus 4.7…'
+          ? 'qed’bop is thinking…'
           : hasResult
             ? 'Regenerate'
             : 'Get student URL'}
       </button>
+      {generating && (
+        <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+          <LoadingMessages poem={poem} />
+        </p>
+      )}
       {!ready && !generating && (
         <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', marginTop: '0.5rem' }}>
           Pick at least one musical version above first.
@@ -59,7 +68,7 @@ export function BasicGenerate({
           {teacherUrl && (
             <UrlBlock
               label="Teacher edition"
-              description="A supplementary page just for you, with poet bio, historical context, a suggested class agenda, and per-question teaching commentary. First load takes ~15s while Claude generates."
+              description="A supplementary page just for you, with poet bio, historical context, a suggested class agenda, and per-question teaching commentary. First load takes ~15s while qed’bop generates."
               relativeUrl={teacherUrl}
             />
           )}

@@ -56,7 +56,7 @@ export default async function AdminPage() {
       </header>
 
       <p style={{ color: 'var(--muted)', maxWidth: '46rem', marginBottom: '1rem' }}>
-        Edit per-video annotations: genre, duration, vocal character, artist, year, interpretive themes (safe for student-facing AI), and teacher-only timestamped notes (used only in teacher edition + chat). Changes take effect on next AI generation; existing cached generations bust automatically when the underlying data changes.
+        Edit per-video annotations: genre, duration, vocal character, artist, year, interpretive themes (safe for student-facing qed&rsquo;bop output), and teacher-only timestamped notes (used only in teacher edition + chat). Changes take effect next time qed&rsquo;bop generates; existing cached generations bust automatically when the underlying data changes.
       </p>
 
       <p style={{ marginBottom: '2rem' }}>
