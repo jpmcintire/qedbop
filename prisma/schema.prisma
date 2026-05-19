@@ -47,3 +47,23 @@ model PoetAnnotation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// Admin-attached videos for a poem. Appended to the static versions[]
+// in lib/poems.ts when /admin/poems/[slug]/add-video saves a YouTube
+// search result. Annotations (genre, themes, teacherNotes) still live
+// in VideoAnnotation keyed by youtubeId, so a PoemVideo + a matching
+// VideoAnnotation row work together exactly like a static + DB-override
+// pair.
+model PoemVideo {
+  id        String   @id @default(cuid())
+  poemSlug  String
+  youtubeId String
+  label     String?
+  position  Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([poemSlug, youtubeId])
+  @@index([poemSlug])
+}

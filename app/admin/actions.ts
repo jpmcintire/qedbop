@@ -3,7 +3,13 @@
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { fetchVideoMetadata, type FetchResult } from '@/lib/youtube';
+import { POEMS } from '@/lib/poems';
+import {
+  fetchVideoMetadata,
+  searchVideos,
+  type FetchResult,
+  type SearchResult,
+} from '@/lib/youtube';
 
 const SaveSchema = z.object({
   youtubeId: z.string().min(1),
@@ -134,4 +140,81 @@ export async function clearPoetAnnotation(slug: string): Promise<SaveResult> {
 
 export async function fetchYouTubeMetadata(youtubeId: string): Promise<FetchResult> {
   return fetchVideoMetadata(youtubeId);
+}
+
+export async function searchYouTube(query: string): Promise<SearchResult> {
+  return searchVideos(query);
+}
+
+const AttachSchema = z.object({
+  poemSlug: z.string().min(1),
+  youtubeId: z.string().min(1),
+  label: z.string().nullable(),
+});
+
+export async function attachVideoToPoem(input: z.infer<typeof AttachSchema>): Promise<SaveResult> {
+  const parsed = AttachSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues.map((i) => i.message).join('; ') };
+  }
+  if (!POEMS.some((p) => p.slug === parsed.data.poemSlug)) {
+    return { ok: false, error: `Unknown poem slug "${parsed.data.poemSlug}".` };
+  }
+  const label = parsed.data.label?.trim() || null;
+
+  try {
+    // Position = (max existing position for this poem) + 1.
+    const existing = await prisma.poemVideo.findMany({
+      where: { poemSlug: parsed.data.poemSlug },
+      select: { position: true },
+    });
+    const nextPosition = existing.reduce((m, r) => Math.max(m, r.position), 0) + 1;
+
+    await prisma.poemVideo.upsert({
+      where: {
+        poemSlug_youtubeId: {
+          poemSlug: parsed.data.poemSlug,
+          youtubeId: parsed.data.youtubeId,
+        },
+      },
+      create: {
+        poemSlug: parsed.data.poemSlug,
+        youtubeId: parsed.data.youtubeId,
+        label,
+        position: nextPosition,
+      },
+      update: { label },
+    });
+  } catch (err) {
+    console.error('[admin/attach] DB write failed:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'DB write failed' };
+  }
+
+  try {
+    revalidateTag('questions');
+    revalidateTag('teacher-edition');
+    revalidateTag('topics');
+  } catch {
+    // not fatal
+  }
+  return { ok: true };
+}
+
+export async function detachVideoFromPoem(
+  poemSlug: string,
+  youtubeId: string
+): Promise<SaveResult> {
+  if (!poemSlug || !youtubeId) {
+    return { ok: false, error: 'poemSlug and youtubeId are required' };
+  }
+  try {
+    await prisma.poemVideo.deleteMany({ where: { poemSlug, youtubeId } });
+  } catch (err) {
+    console.error('[admin/detach] DB delete failed:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'DB delete failed' };
+  }
+  revalidateTag('questions');
+  revalidateTag('teacher-edition');
+  revalidateTag('topics');
+  return { ok: true };
 }
