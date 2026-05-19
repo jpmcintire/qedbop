@@ -32,18 +32,7 @@ export default async function EditVideoPage({ params }: Props) {
         </Link>
         <p className="chrome" style={{ marginTop: '0.75rem' }}>
           Editing video on <Link href={`/admin`} style={{ color: 'inherit' }}>{state.poemTitle}</Link>
-        </p>
-        <h1
-          style={{
-            fontFamily: 'Georgia, "Source Serif Pro", serif',
-            fontSize: '1.75rem',
-            fontWeight: 600,
-            margin: '0.25rem 0 0 0',
-          }}
-        >
-          {state.dbAnnotation?.label ?? state.staticVersion.label}
-        </h1>
-        <p className="chrome" style={{ marginTop: '0.25rem' }}>
+          {' · '}
           youtu.be/{state.staticVersion.youtubeId}
         </p>
       </header>

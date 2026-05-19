@@ -129,6 +129,17 @@ export function EditForm({ youtubeId, staticDefaults, dbAnnotation }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '46rem' }}>
+      <h1
+        style={{
+          fontFamily: 'Georgia, "Source Serif Pro", serif',
+          fontSize: '1.75rem',
+          fontWeight: 600,
+          margin: 0,
+        }}
+      >
+        {label || staticDefaults.label}
+      </h1>
+
       <Group label="Label">
         <input
           type="text"
@@ -250,7 +261,7 @@ These ARE used in teacher-edition rendering (agenda, per-question commentary) an
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-      <label className="chrome" style={{ color: 'var(--ink)' }}>
+      <label className="chrome" style={{ color: 'var(--ink)', fontWeight: 700 }}>
         {label}
       </label>
       {children}
@@ -268,7 +279,9 @@ function Row({ children }: { children: React.ReactNode }) {
 
 function Help({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', margin: 0 }}>{children}</p>
+    <p style={{ color: 'var(--muted)', fontSize: '0.8125rem', fontStyle: 'italic', margin: 0 }}>
+      {children}
+    </p>
   );
 }
 
