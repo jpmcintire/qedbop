@@ -223,22 +223,8 @@ And miles to go before I sleep.`,
     year: 1914,
     // PASTE: full text of Mending Wall (Project Gutenberg / Poetry Foundation).
     text: ``,
-    versions: [
-      {
-        label: 'Frost reads his own poem',
-        youtubeId: 'gOT4NUKBNIU',
-        artist: 'Robert Frost (the poet himself)',
-        themes: `An author-reading rather than a musical setting. Frost's own delivery makes audible the poem's quiet conversational pacing and the dry irony of its central refrain. Hearing the poet read tilts the interpretive question: is the "Something there is that doesn't love a wall" voice the speaker's, or Frost's own? The pacing of the reading itself becomes a kind of argument about the line breaks, and where Frost slows or doesn't slow tells the listener what he heard in his own meter.`,
-        teacherNotes: '',
-      },
-      {
-        label: 'Leonard Nimoy reads it',
-        youtubeId: 'rMXB-C2iKpM',
-        artist: 'Leonard Nimoy',
-        themes: `An actor's reading rather than a musical setting, but one whose interpretive choices function the way a musical arrangement would. Nimoy's measured cadence and resonant lower register make the poem feel more formal and ceremonial than Frost's own conversational delivery — closer to a public address than a private musing. The contrast with Frost's own reading is itself the lesson: the same words, two different arguments about who the speaker is and how seriously to take his observations.`,
-        teacherNotes: '',
-      },
-    ],
+    // Filler removed. Attach the qed'bop channel settings via /admin/channel.
+    versions: [],
     questions: [
       'The poem opens with "Something there is that doesn\'t love a wall" and closes with the neighbor\'s "Good fences make good neighbors." Which line does the poem itself believe?',
       'The speaker repairs the wall every spring even while questioning whether it should exist. What does that contradiction reveal about him?',
@@ -257,17 +243,8 @@ And miles to go before I sleep.`,
     year: 1897,
     // PASTE: full text of Richard Cory (Project Gutenberg / Poetry Foundation).
     text: ``,
-    versions: [
-      {
-        label: 'Simon & Garfunkel setting',
-        youtubeId: '_vNSWoSWSog',
-        artist: 'Simon & Garfunkel',
-        genre: 'Folk rock',
-        recordingYear: 1966,
-        themes: `Paul Simon's 1966 setting repositions Robinson's poem from the point of view of a person who works in Cory's factory. The musical adaptation keeps the original third-person framing in the verses but inserts a recurring refrain — a wish to be in Cory's place — that recasts the poem's irony. Where Robinson's poem lets the final line do all the interpretive work in a single beat of silence, the song's refrain forces the reader to inhabit the envy for several minutes before the ending arrives, so the final turn lands as a comment on the speaker's longing, not just on Cory himself. The folk-rock arrangement gives the verses a working-class register the poem alone doesn't insist on.`,
-        teacherNotes: '',
-      },
-    ],
+    // Filler removed. Attach the qed'bop channel settings via /admin/channel.
+    versions: [],
     questions: [
       'Robinson controls every word of his portrait of Cory until the final line. What does the form of that withholding accomplish that a longer poem could not?',
       'The townspeople call Cory "richer than a king" and "imperially slim." Why royal language for a businessman?',
@@ -286,20 +263,8 @@ And miles to go before I sleep.`,
     year: 1818,
     // PASTE: full text of Ozymandias (Project Gutenberg / Poetry Foundation).
     text: ``,
-    versions: [
-      {
-        label: 'Sung setting',
-        youtubeId: '5MlW6QDsH2U',
-        themes: `A contemporary musical setting that holds the sonnet's ironic structure intact. Settings of Ozymandias face a basic interpretive choice: amplify the imperial grandeur of the inscribed boast so the surrounding ruin lands harder, or undercut the boast from the start so the irony is audible from the opening lines. This setting tilts toward the former — the music permits the king's voice the weight he claims, then the arrangement opens out into the empty desert behind it. The two-frame structure of the poem (traveler narrating, then king's inscription quoted within) gets musical parallel in the way the texture shifts when the inscription begins.`,
-        teacherNotes: '',
-      },
-      {
-        label: 'Lyric video setting',
-        youtubeId: 'WhJSZ2SNoeY',
-        themes: `A second musical setting available for comparison work. Because the sonnet is so compact and so structurally famous, having more than one setting in the classroom lets students argue about which interpretive emphasis the music should pursue: the inscription's bombast, the traveler's quiet report, the desert's surrounding silence, or the speaker's own framing that holds all three. No single setting can carry every emphasis; the comparison itself becomes the lesson.`,
-        teacherNotes: '',
-      },
-    ],
+    // Filler removed. Attach the qed'bop channel settings via /admin/channel.
+    versions: [],
     questions: [
       'The poem has four narrators stacked inside each other: Shelley, the speaker, the traveler, and the king\'s inscription. What does that nesting accomplish?',
       'The sculptor\'s hand "mocked" the king\'s passions — meaning both imitated and ridiculed. How does that double meaning sit at the center of the poem?',
@@ -318,24 +283,8 @@ And miles to go before I sleep.`,
     year: 1794,
     // PASTE: full text of The Tyger (Project Gutenberg / Poetry Foundation).
     text: ``,
-    versions: [
-      {
-        label: 'Allen Ginsberg sings Blake',
-        youtubeId: 'luUCgQ84sO4',
-        artist: 'Allen Ginsberg',
-        themes: `Ginsberg's pump-organ setting of Blake's lyric is part of a larger project to recover Blake's "songs" as music actually meant to be sung rather than read silently. The setting pushes the poem toward its mystical and prophetic register — Blake as visionary chanter rather than as philosopher. The simple drone underneath, the unornamented vocal line, and the cyclic return to the opening question all emphasize that the poem is a sequence of unanswered theological inquiries, not a set of statements. Hearing it sung makes audible what silent reading often hides: the poem is structured as an incantation, repeating its central question with mounting intensity rather than resolving it.`,
-        teacherNotes: '',
-      },
-      {
-        label: 'Tangerine Dream setting',
-        youtubeId: '_6UsrgRkOas',
-        artist: 'Tangerine Dream',
-        genre: 'Electronic / ambient',
-        recordingYear: 1987,
-        themes: `An electronic, atmospheric setting from Tangerine Dream's 1987 album Tyger, which sets three Blake poems with vocalist Jocelyn B. Smith. Where Ginsberg's reading turns the poem into chant, this setting builds a vast synthesized texture around the lyric so the "fearful symmetry" becomes a sonic phenomenon — the listener experiences the scale of what Blake describes rather than just hearing it described. The female vocal floats above the instrumental wash, treating Blake's lines closer to spell than catechism. The two settings (Ginsberg and Tangerine Dream) are an unusually clean comparison case: same brief lyric, radically different commitments about what the poem IS.`,
-        teacherNotes: '',
-      },
-    ],
+    // Filler removed. Attach the qed'bop channel settings via /admin/channel.
+    versions: [],
     questions: [
       'The poem consists almost entirely of questions and never gives an answer. What kind of inquiry refuses its own conclusion, and what does that refusal do?',
       'Blake pairs this poem with "The Lamb" in his Songs of Innocence and of Experience. How does the existence of that pairing change what The Tyger can mean alone?',
@@ -354,17 +303,8 @@ And miles to go before I sleep.`,
     year: 1845,
     // PASTE: full text of The Raven (Project Gutenberg / Poetry Foundation).
     text: ``,
-    versions: [
-      {
-        label: 'Alan Parsons Project setting',
-        youtubeId: '_oOBt4L9ky4',
-        artist: 'The Alan Parsons Project',
-        genre: 'Progressive rock',
-        recordingYear: 1976,
-        themes: `From the 1976 album Tales of Mystery and Imagination, an album-length progressive-rock interpretation of Poe. The setting layers spoken intro (originally Orson Welles), choral vocals, and synthesized instrumentation; the refrain "Nevermore" becomes a choral motif that arrives like an external chorus of accusations rather than a single bird's reply. The musical arrangement organizes the poem's eighteen stanzas into a longer-arc shape, moving across sections that group the early stanzas (curiosity, mild dread), the middle (escalating exchange), and the closing stanzas (settled resignation). The setting compresses Poe's incremental movement into a few clear musical pivots, so the moment of recognition lands more decisively than the poem alone allows.`,
-        teacherNotes: '',
-      },
-    ],
+    // Filler removed. Attach the qed'bop channel settings via /admin/channel.
+    versions: [],
     questions: [
       'The poem repeats "Nevermore" as the bird\'s only word, but the meaning shifts with each repetition. Track three repetitions and describe how each one means something different.',
       'The speaker invents an entire conversation with a bird who only ever says one word. What does that one-sided exchange reveal about the speaker, independent of what the bird represents?',
