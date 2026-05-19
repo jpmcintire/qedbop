@@ -67,3 +67,30 @@ model PoemVideo {
   @@unique([poemSlug, youtubeId])
   @@index([poemSlug])
 }
+
+// One row per Anthropic API call. Written from lib/api-usage.ts after
+// each generator's client.messages.create returns; never blocks the
+// caller on failure. Powers the /admin/usage dashboard.
+model ApiUsage {
+  id                  String   @id @default(cuid())
+  // One of: 'questions' | 'topics' | 'teacher-edition' | 'teacher-ask'
+  // | 'single-question'. Stored as String so adding a new generator
+  // doesn't need an enum migration.
+  generator           String
+  model               String
+  inputTokens         Int
+  outputTokens        Int
+  cacheReadTokens     Int      @default(0)
+  cacheCreationTokens Int      @default(0)
+  // USD cost computed at write time from current model pricing. We
+  // store the computed number (not just the tokens) so historical
+  // reports stay correct even if Anthropic changes their prices.
+  costUsd             Float
+  poemSlug            String?
+  audience            String?
+  createdAt           DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([generator, createdAt])
+  @@index([poemSlug])
+}

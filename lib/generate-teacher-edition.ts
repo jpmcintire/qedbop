@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { recordUsage } from './api-usage';
 import { unstable_cache } from 'next/cache';
 import { z } from 'zod';
 import type { Poem, Version } from './poems';
@@ -149,6 +150,14 @@ No prose, no fences. Make every word earn its place.`;
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    await recordUsage({
+      generator: 'teacher-edition',
+      model: MODEL,
+      usage: response.usage,
+      poemSlug: poem.slug,
+      audience,
     });
 
     const text = response.content.find((b) => b.type === 'text');

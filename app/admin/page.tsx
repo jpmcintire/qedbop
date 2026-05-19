@@ -59,9 +59,14 @@ export default async function AdminPage() {
         Edit per-video annotations: genre, duration, vocal character, artist, year, interpretive themes (safe for student-facing AI), and teacher-only timestamped notes (used only in teacher edition + chat). Changes take effect on next AI generation; existing cached generations bust automatically when the underlying data changes.
       </p>
 
-      <p style={{ marginBottom: '2rem' }}>
+      <p style={{ marginBottom: '0.5rem' }}>
         <Link href="/admin/poets" className="chrome" style={{ color: 'var(--ink)' }}>
           Edit per-poet special facts →
+        </Link>
+      </p>
+      <p style={{ marginBottom: '2rem' }}>
+        <Link href="/admin/usage" className="chrome" style={{ color: 'var(--ink)' }}>
+          API usage and cost →
         </Link>
       </p>
 

@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { recordUsage } from './api-usage';
 import type { Poem, Version } from './poems';
 import { versionPromptBlock } from './poems';
 
@@ -102,6 +103,14 @@ export async function askTeacher({
       max_tokens: 1500,
       system: buildSystemPrompt(poem, audience, versions, questions),
       messages: history.map((m) => ({ role: m.role, content: m.content })),
+    });
+
+    await recordUsage({
+      generator: 'teacher-ask',
+      model: MODEL,
+      usage: response.usage,
+      poemSlug: poem.slug,
+      audience,
     });
 
     const text = response.content.find((b) => b.type === 'text');
