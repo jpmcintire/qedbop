@@ -64,7 +64,44 @@ export type Poem = {
   // to interpretive. The viewer URL specifies how many to render (?q=N),
   // which slices from the top. Edit freely; no schema, no migration.
   questions: string[];
+
+  // Populated at runtime by getPoemEnriched from the PoetAnnotation table.
+  // Curated facts the teacher wants the AI to take into account when
+  // generating poet bio, historical context, and teacher chat answers.
+  // Not present in the static catalog.
+  poetSpecialFacts?: string;
 };
+
+// Stable slug for a poet, derived from the author name as it appears in
+// POEMS. Used as the primary key of PoetAnnotation rows and as the URL
+// segment for /admin/poets/[slug].
+export function slugifyAuthor(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// Unique poets from the static catalog, in the order they first appear.
+// Each one's displayName is whatever string the poem's `author` field
+// uses. Slug is derived consistently via slugifyAuthor.
+export function listPoets(): Array<{ slug: string; displayName: string; poemSlugs: string[] }> {
+  const order: string[] = [];
+  const byName = new Map<string, string[]>();
+  for (const poem of POEMS) {
+    if (!byName.has(poem.author)) {
+      byName.set(poem.author, []);
+      order.push(poem.author);
+    }
+    byName.get(poem.author)!.push(poem.slug);
+  }
+  return order.map((name) => ({
+    slug: slugifyAuthor(name),
+    displayName: name,
+    poemSlugs: byName.get(name) ?? [],
+  }));
+}
 
 export const POEMS: Poem[] = [
   {

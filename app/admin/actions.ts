@@ -87,3 +87,46 @@ export async function clearVideoAnnotation(youtubeId: string): Promise<SaveResul
   revalidateTag('topics');
   return { ok: true };
 }
+
+const SavePoetSchema = z.object({
+  slug: z.string().min(1),
+  specialFacts: z.string().nullable(),
+});
+
+export async function savePoetAnnotation(input: z.infer<typeof SavePoetSchema>): Promise<SaveResult> {
+  const parsed = SavePoetSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues.map((i) => i.message).join('; ') };
+  }
+  const specialFacts = parsed.data.specialFacts?.trim() || null;
+  try {
+    await prisma.poetAnnotation.upsert({
+      where: { slug: parsed.data.slug },
+      create: { slug: parsed.data.slug, specialFacts },
+      update: { specialFacts },
+    });
+  } catch (err) {
+    console.error('[admin/savePoet] DB write failed:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'DB write failed' };
+  }
+  // Poet facts feed teacher-edition + teacher-ask. They don't affect
+  // student questions, but the teacher-edition cache must bust.
+  try {
+    revalidateTag('teacher-edition');
+  } catch {
+    // not fatal
+  }
+  return { ok: true };
+}
+
+export async function clearPoetAnnotation(slug: string): Promise<SaveResult> {
+  if (!slug) return { ok: false, error: 'no slug' };
+  try {
+    await prisma.poetAnnotation.deleteMany({ where: { slug } });
+  } catch (err) {
+    console.error('[admin/clearPoet] DB delete failed:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'DB delete failed' };
+  }
+  revalidateTag('teacher-edition');
+  return { ok: true };
+}

@@ -10,7 +10,7 @@
 // immediately.
 
 import { prisma } from './db';
-import { POEMS, type Poem, type Version } from './poems';
+import { POEMS, slugifyAuthor, type Poem, type Version } from './poems';
 
 export async function getPoemEnriched(slug: string): Promise<Poem | undefined> {
   const poem = POEMS.find((p) => p.slug === slug);
@@ -58,7 +58,53 @@ export async function getPoemEnriched(slug: string): Promise<Poem | undefined> {
     };
   });
 
-  return { ...poem, versions: enrichedVersions };
+  let poetSpecialFacts: string | undefined;
+  try {
+    const poetRow = await prisma.poetAnnotation.findUnique({
+      where: { slug: slugifyAuthor(poem.author) },
+    });
+    poetSpecialFacts = poetRow?.specialFacts?.trim() || undefined;
+  } catch (err) {
+    console.error('[poems-runtime] poet annotation read failed:', err);
+  }
+
+  return { ...poem, versions: enrichedVersions, poetSpecialFacts };
+}
+
+// Helper for the admin poet UI: get the displayName + persisted annotation
+// (if any) for one poet slug. Returns null if no poem in the catalog has an
+// author that slugifies to this value.
+export async function getPoetEditState(slug: string): Promise<{
+  slug: string;
+  displayName: string;
+  poemSlugs: string[];
+  specialFacts: string | null;
+} | null> {
+  const order: string[] = [];
+  const byName = new Map<string, string[]>();
+  for (const poem of POEMS) {
+    if (!byName.has(poem.author)) {
+      byName.set(poem.author, []);
+      order.push(poem.author);
+    }
+    byName.get(poem.author)!.push(poem.slug);
+  }
+  const displayName = order.find((name) => slugifyAuthor(name) === slug);
+  if (!displayName) return null;
+
+  let specialFacts: string | null = null;
+  try {
+    const row = await prisma.poetAnnotation.findUnique({ where: { slug } });
+    specialFacts = row?.specialFacts ?? null;
+  } catch (err) {
+    console.error('[poems-runtime] poet annotation read failed:', err);
+  }
+  return {
+    slug,
+    displayName,
+    poemSlugs: byName.get(displayName) ?? [],
+    specialFacts,
+  };
 }
 
 // Helper for the admin UI: get a single version's current effective values

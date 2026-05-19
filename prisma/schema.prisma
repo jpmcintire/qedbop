@@ -35,3 +35,15 @@ model VideoAnnotation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// Per-poet curated facts. Keyed by a slug derived from the author name
+// in lib/poems.ts (see slugifyAuthor). The AI generates the bulk of the
+// poet bio + historical context; specialFacts is a curated supplement
+// the teacher wants included for THIS poet across all of their poems.
+model PoetAnnotation {
+  slug         String   @id
+  specialFacts String?  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
