@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ConciergeForm } from './_components/ConciergeForm';
 
 export const metadata = {
   title: "qed'bop",
@@ -8,7 +9,7 @@ export const metadata = {
 export default function Landing() {
   return (
     <main className="page">
-      <header style={{ marginTop: '2rem', marginBottom: '3rem' }}>
+      <header style={{ marginTop: '2rem', marginBottom: '2.5rem' }}>
         <span
           className="wordmark"
           style={{ color: 'var(--ink)', fontSize: '3rem', display: 'block' }}
@@ -20,51 +21,37 @@ export default function Landing() {
         </p>
       </header>
 
-      <section style={{ marginBottom: '3rem', maxWidth: '40rem' }}>
-        <p style={{ fontSize: '1.0625rem', lineHeight: 1.7, marginBottom: '1rem' }}>
-          qed&rsquo;bop builds shareable lessons around public-domain poems that
-          have been set to music. Pick a poem, pick one or more recorded settings,
-          and Claude drafts discussion questions calibrated to your audience.
+      <section style={{ marginBottom: '2.5rem', maxWidth: '38rem' }}>
+        <h1
+          style={{
+            fontFamily: 'Georgia, "Source Serif Pro", serif',
+            fontSize: '1.5rem',
+            fontWeight: 600,
+            margin: '0 0 0.5rem 0',
+            lineHeight: 1.3,
+          }}
+        >
+          What are you interested in teaching?
+        </h1>
+        <p style={{ color: 'var(--muted)', fontSize: '0.9375rem', marginBottom: '1.25rem' }}>
+          A poem, a poet, a theme, a literary work, a grade level — any of those work.
+          qed&rsquo;bop will suggest specific lessons from its library.
         </p>
-        <p style={{ fontSize: '1.0625rem', lineHeight: 1.7, marginBottom: '1rem' }}>
-          The questions stay deliberately general about the music — never
-          quoting timestamps or specific moments. Students supply the
-          specificity from their own listening. That&rsquo;s the proof of
-          engagement, and the part AI can&rsquo;t shortcut.
-        </p>
-        <p style={{ fontSize: '1.0625rem', lineHeight: 1.7 }}>
-          No accounts, no sign-ups. Every lesson is a URL you send.
-        </p>
+        <ConciergeForm />
       </section>
 
-      <nav
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.75rem',
-          maxWidth: '20rem',
-          marginBottom: '4rem',
-        }}
-      >
-        <Link
-          href="/build"
-          className="btn"
-          style={{ textDecoration: 'none', textAlign: 'center' }}
-        >
-          Build a lesson
+      <p style={{ marginBottom: '4rem' }}>
+        <Link href="/build" className="chrome" style={{ color: 'var(--ink)' }}>
+          Or browse the library directly →
         </Link>
-        <Link
-          href="/admin"
-          className="btn btn-ghost"
-          style={{ textDecoration: 'none', textAlign: 'center' }}
-        >
-          Admin
-        </Link>
-      </nav>
+      </p>
 
       <footer className="hairline" style={{ paddingTop: '1.5rem' }}>
         <p className="chrome">
-          A teaching tool, not a tracking tool. Anonymous from the student&rsquo;s side.
+          A teaching tool, not a tracking tool. Anonymous from the student&rsquo;s side.{' '}
+          <Link href="/admin" style={{ color: 'inherit' }}>
+            Admin
+          </Link>
         </p>
       </footer>
     </main>

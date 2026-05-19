@@ -1,10 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { recordUsage } from './api-usage';
+import { getModelFor } from './model-config';
 import { unstable_cache } from 'next/cache';
 import { z } from 'zod';
 import type { Poem } from './poems';
-
-const MODEL = 'claude-opus-4-7';
 
 const TopicsResponse = z.object({
   topics: z.array(z.string().min(1).max(80)).min(3).max(12),
@@ -90,9 +89,10 @@ Return: {"topics": ["...", "...", ...]}
 No prose, no fences.`;
 
   try {
+    const model = await getModelFor('topics');
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
-      model: MODEL,
+      model,
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
@@ -100,7 +100,7 @@ No prose, no fences.`;
 
     await recordUsage({
       generator: 'topics',
-      model: MODEL,
+      model,
       usage: response.usage,
       poemSlug: poem.slug,
       audience,

@@ -1,9 +1,9 @@
 import 'server-only';
 import { prisma } from './db';
 
-// Opus 4.7 pricing per million tokens, USD. Update here when Anthropic
-// changes prices; historical rows keep their previously-computed costUsd
-// (we don't recompute on read), so price drift doesn't rewrite history.
+// Pricing per million tokens, USD. Update here when Anthropic changes
+// prices; historical rows keep their previously-computed costUsd (we
+// don't recompute on read), so price drift doesn't rewrite history.
 const PRICING_PER_MTOK: Record<string, {
   input: number;
   output: number;
@@ -16,6 +16,18 @@ const PRICING_PER_MTOK: Record<string, {
     cacheRead: 1.5,
     cacheCreate: 18.75,
   },
+  'claude-sonnet-4-6': {
+    input: 3,
+    output: 15,
+    cacheRead: 0.3,
+    cacheCreate: 3.75,
+  },
+  'claude-haiku-4-5-20251001': {
+    input: 1,
+    output: 5,
+    cacheRead: 0.1,
+    cacheCreate: 1.25,
+  },
 };
 
 export type Generator =
@@ -23,7 +35,8 @@ export type Generator =
   | 'topics'
   | 'teacher-edition'
   | 'teacher-ask'
-  | 'single-question';
+  | 'single-question'
+  | 'concierge';
 
 type UsageBlock = {
   input_tokens: number;

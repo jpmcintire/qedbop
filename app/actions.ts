@@ -12,6 +12,18 @@ import {
   type TeacherEditionOverrides,
 } from '@/lib/generate-teacher-edition';
 import { askTeacher as _askTeacher, type ChatMessage } from '@/lib/teacher-ask';
+import {
+  runConcierge,
+  type ConciergeTurn,
+  type ConciergeResponse,
+} from '@/lib/concierge';
+
+export async function fetchConcierge(
+  query: string,
+  history?: ConciergeTurn[]
+): Promise<ConciergeResponse | { kind: 'error'; message: string }> {
+  return runConcierge({ query, history });
+}
 
 export async function fetchTopicOptions(
   slug: string,

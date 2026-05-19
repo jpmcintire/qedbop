@@ -1,11 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { recordUsage } from './api-usage';
+import { getModelFor } from './model-config';
 import { unstable_cache } from 'next/cache';
 import { z } from 'zod';
 import type { Poem, Version } from './poems';
 import { versionPromptBlock } from './poems';
-
-const MODEL = 'claude-opus-4-7';
 
 const AgendaItem = z.object({
   minutes: z.number().int().min(1).max(120),
@@ -144,9 +143,10 @@ Return JSON exactly matching this shape:
 No prose, no fences. Make every word earn its place.`;
 
   try {
+    const model = await getModelFor('teacher-edition');
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
-      model: MODEL,
+      model,
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
@@ -154,7 +154,7 @@ No prose, no fences. Make every word earn its place.`;
 
     await recordUsage({
       generator: 'teacher-edition',
-      model: MODEL,
+      model,
       usage: response.usage,
       poemSlug: poem.slug,
       audience,
