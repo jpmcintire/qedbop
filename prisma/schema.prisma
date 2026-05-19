@@ -107,3 +107,18 @@ model ModelSetting {
 
   updatedAt DateTime @updatedAt
 }
+
+// Singleton row holding the OAuth refresh token for the qed'bop YouTube
+// channel. The refresh token is long-lived; access tokens are derived
+// from it on demand and cached in memory. Only the channel owner's
+// consent populates this — it lets the admin list unlisted uploads,
+// which an API key alone cannot see. id is always "singleton".
+model YouTubeToken {
+  id           String   @id @default("singleton")
+  refreshToken String
+  scope        String?
+  channelId    String?
+  connectedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+

@@ -257,3 +257,114 @@ export async function searchVideos(query: string, maxResults = 12): Promise<Sear
   }
   return { ok: true, hits };
 }
+
+const PlaylistItemsResponse = z.object({
+  nextPageToken: z.string().optional(),
+  items: z.array(
+    z.object({
+      contentDetails: z.object({ videoId: z.string() }),
+    })
+  ),
+});
+
+export type ChannelVideo = YouTubeVideoMetadata & {
+  // 'public' | 'unlisted' | 'private' — from videos.list status block.
+  privacyStatus: string | null;
+};
+
+export type ChannelListResult =
+  | { ok: true; videos: ChannelVideo[] }
+  | { ok: false; error: string };
+
+// Lists every upload on the channel (public AND unlisted) using an
+// owner OAuth access token. The channel's auto-generated "uploads"
+// playlist id is the channel id with the "UC" prefix swapped for "UU".
+// Paginates playlistItems, then hydrates with videos.list for duration,
+// stats, and privacy status.
+export async function listChannelVideos(
+  accessToken: string,
+  channelId: string
+): Promise<ChannelListResult> {
+  if (!channelId.startsWith('UC')) {
+    return { ok: false, error: `Channel id "${channelId}" doesn't look right (should start with UC).` };
+  }
+  const uploadsPlaylist = 'UU' + channelId.slice(2);
+  const headers = { Authorization: `Bearer ${accessToken}` };
+
+  // 1) Collect all video ids from the uploads playlist.
+  const ids: string[] = [];
+  let pageToken: string | undefined;
+  let guard = 0;
+  do {
+    const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+    url.searchParams.set('part', 'contentDetails');
+    url.searchParams.set('playlistId', uploadsPlaylist);
+    url.searchParams.set('maxResults', '50');
+    if (pageToken) url.searchParams.set('pageToken', pageToken);
+
+    let res: Response;
+    try {
+      res = await fetch(url, { headers, cache: 'no-store' });
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Network error listing uploads.' };
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      return { ok: false, error: `playlistItems.list ${res.status}: ${body.slice(0, 200)}` };
+    }
+    const parsed = PlaylistItemsResponse.safeParse(await res.json().catch(() => null));
+    if (!parsed.success) return { ok: false, error: 'Unexpected playlistItems response shape.' };
+    for (const item of parsed.data.items) ids.push(item.contentDetails.videoId);
+    pageToken = parsed.data.nextPageToken;
+    guard += 1;
+  } while (pageToken && guard < 60);
+
+  if (ids.length === 0) return { ok: true, videos: [] };
+
+  // 2) Hydrate in batches of 50 via videos.list (with status for privacy).
+  const videos: ChannelVideo[] = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const batch = ids.slice(i, i + 50);
+    const url = new URL('https://www.googleapis.com/youtube/v3/videos');
+    url.searchParams.set('part', 'snippet,contentDetails,statistics,status');
+    url.searchParams.set('id', batch.join(','));
+
+    let res: Response;
+    try {
+      res = await fetch(url, { headers, cache: 'no-store' });
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Network error hydrating videos.' };
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      return { ok: false, error: `videos.list ${res.status}: ${body.slice(0, 200)}` };
+    }
+    const json = (await res.json().catch(() => null)) as
+      | { items?: Array<Record<string, unknown>> }
+      | null;
+    const items = json?.items ?? [];
+    for (const raw of items) {
+      const snippet = (raw.snippet ?? {}) as Record<string, unknown>;
+      const contentDetails = (raw.contentDetails ?? {}) as Record<string, unknown>;
+      const statistics = (raw.statistics ?? {}) as Record<string, unknown>;
+      const status = (raw.status ?? {}) as Record<string, unknown>;
+      const seconds = parseIsoDurationToSeconds(String(contentDetails.duration ?? ''));
+      const thumbs = (snippet.thumbnails ?? {}) as Record<string, { url?: string }>;
+      videos.push({
+        youtubeId: String(raw.id ?? ''),
+        title: String(snippet.title ?? ''),
+        channelTitle: String(snippet.channelTitle ?? ''),
+        channelId: String(snippet.channelId ?? ''),
+        publishedAt: String(snippet.publishedAt ?? ''),
+        durationSeconds: seconds ?? 0,
+        thumbnailUrl:
+          thumbs.medium?.url ?? thumbs.high?.url ?? thumbs.default?.url ?? null,
+        viewCount: statistics.viewCount ? parseInt(String(statistics.viewCount), 10) : null,
+        likeCount: statistics.likeCount ? parseInt(String(statistics.likeCount), 10) : null,
+        commentCount: statistics.commentCount ? parseInt(String(statistics.commentCount), 10) : null,
+        privacyStatus: status.privacyStatus ? String(status.privacyStatus) : null,
+      });
+    }
+  }
+  return { ok: true, videos };
+}
