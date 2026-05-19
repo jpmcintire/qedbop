@@ -2,7 +2,12 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { saveVideoAnnotation, clearVideoAnnotation } from '../../actions';
+import {
+  saveVideoAnnotation,
+  clearVideoAnnotation,
+  fetchYouTubeMetadata,
+} from '../../actions';
+import type { YouTubeVideoMetadata } from '@/lib/youtube';
 
 type Defaults = {
   label: string;
@@ -64,6 +69,22 @@ export function EditForm({ youtubeId, staticDefaults, dbAnnotation }: Props) {
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [ytPending, startYtTransition] = useTransition();
+  const [ytMeta, setYtMeta] = useState<YouTubeVideoMetadata | null>(null);
+  const [ytError, setYtError] = useState<string | null>(null);
+
+  function fetchFromYouTube() {
+    setYtError(null);
+    startYtTransition(async () => {
+      const res = await fetchYouTubeMetadata(youtubeId);
+      if (res.ok) {
+        setYtMeta(res.metadata);
+        setDurationStr(formatDuration(res.metadata.durationSeconds));
+      } else {
+        setYtError(res.error);
+      }
+    });
+  }
 
   function save() {
     setStatus(null);
@@ -139,6 +160,13 @@ export function EditForm({ youtubeId, staticDefaults, dbAnnotation }: Props) {
       >
         {label || staticDefaults.label}
       </h1>
+
+      <YouTubePanel
+        pending={ytPending}
+        meta={ytMeta}
+        error={ytError}
+        onFetch={fetchFromYouTube}
+      />
 
       <Group label="Label">
         <input
@@ -254,6 +282,82 @@ These ARE used in teacher-edition rendering (agenda, per-question commentary) an
         {status && <span className="chrome" style={{ color: 'var(--ink)' }}>{status}</span>}
         {error && <span style={{ color: '#a33', fontSize: '0.875rem' }}>{error}</span>}
       </div>
+    </div>
+  );
+}
+
+function YouTubePanel({
+  pending,
+  meta,
+  error,
+  onFetch,
+}: {
+  pending: boolean;
+  meta: YouTubeVideoMetadata | null;
+  error: string | null;
+  onFetch: () => void;
+}) {
+  return (
+    <div
+      style={{
+        border: '1px solid var(--rule)',
+        borderRadius: '0.5rem',
+        padding: '1rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          onClick={onFetch}
+          disabled={pending}
+          className="btn btn-ghost"
+          style={{ fontSize: '0.8125rem' }}
+        >
+          {pending ? 'Fetching…' : 'Fetch from YouTube'}
+        </button>
+        <span className="chrome" style={{ fontStyle: 'italic' }}>
+          Pulls duration, title, channel, and current stats from the YouTube Data API. Duration auto-fills below; everything else is shown here for reference.
+        </span>
+      </div>
+      {error && (
+        <p style={{ color: '#a33', fontSize: '0.875rem', margin: 0 }}>{error}</p>
+      )}
+      {meta && (
+        <dl
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr',
+            columnGap: '1rem',
+            rowGap: '0.25rem',
+            margin: 0,
+            fontSize: '0.875rem',
+          }}
+        >
+          <dt style={{ fontWeight: 700 }}>Title</dt>
+          <dd style={{ margin: 0 }}>{meta.title}</dd>
+          <dt style={{ fontWeight: 700 }}>Channel</dt>
+          <dd style={{ margin: 0 }}>{meta.channelTitle}</dd>
+          <dt style={{ fontWeight: 700 }}>Published</dt>
+          <dd style={{ margin: 0 }}>{meta.publishedAt.slice(0, 10)}</dd>
+          <dt style={{ fontWeight: 700 }}>Duration</dt>
+          <dd style={{ margin: 0 }}>{formatDuration(meta.durationSeconds)}</dd>
+          {meta.viewCount != null && (
+            <>
+              <dt style={{ fontWeight: 700 }}>Views</dt>
+              <dd style={{ margin: 0 }}>{meta.viewCount.toLocaleString()}</dd>
+            </>
+          )}
+          {meta.likeCount != null && (
+            <>
+              <dt style={{ fontWeight: 700 }}>Likes</dt>
+              <dd style={{ margin: 0 }}>{meta.likeCount.toLocaleString()}</dd>
+            </>
+          )}
+        </dl>
+      )}
     </div>
   );
 }

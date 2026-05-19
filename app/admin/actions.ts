@@ -3,6 +3,7 @@
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
+import { fetchVideoMetadata, type FetchResult } from '@/lib/youtube';
 
 const SaveSchema = z.object({
   youtubeId: z.string().min(1),
@@ -129,4 +130,8 @@ export async function clearPoetAnnotation(slug: string): Promise<SaveResult> {
   }
   revalidateTag('teacher-edition');
   return { ok: true };
+}
+
+export async function fetchYouTubeMetadata(youtubeId: string): Promise<FetchResult> {
+  return fetchVideoMetadata(youtubeId);
 }
