@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { recordUsage } from './api-usage';
 import { unstable_cache } from 'next/cache';
 import { z } from 'zod';
 import type { Poem, Version } from './poems';
@@ -118,6 +119,14 @@ Return only the JSON object. No prose, no fences.`;
     max_tokens: 2048,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userPrompt }],
+  });
+
+  await recordUsage({
+    generator: 'questions',
+    model: MODEL,
+    usage: response.usage,
+    poemSlug: poem.slug,
+    audience: args.audience,
   });
 
   const text = response.content.find((b) => b.type === 'text');
@@ -262,6 +271,14 @@ No prose, no fences.`;
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    await recordUsage({
+      generator: 'single-question',
+      model: MODEL,
+      usage: response.usage,
+      poemSlug: poem.slug,
+      audience: args.audience,
     });
 
     const text = response.content.find((b) => b.type === 'text');

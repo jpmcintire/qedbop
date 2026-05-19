@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { recordUsage } from './api-usage';
 import { unstable_cache } from 'next/cache';
 import { z } from 'zod';
 import type { Poem } from './poems';
@@ -95,6 +96,14 @@ No prose, no fences.`;
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    await recordUsage({
+      generator: 'topics',
+      model: MODEL,
+      usage: response.usage,
+      poemSlug: poem.slug,
+      audience,
     });
 
     const text = response.content.find((b) => b.type === 'text');
