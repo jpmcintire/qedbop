@@ -77,6 +77,11 @@ export default async function ChannelPage({ searchParams }: Props) {
         <p className="chrome" style={{ marginTop: '0.25rem', fontStyle: 'italic' }}>
           Lists every upload on the qed&rsquo;bop channel — public and unlisted — and lets you attach any of them to a poem.
         </p>
+        <p className="chrome" style={{ marginTop: '0.5rem' }}>
+          <Link href="/admin/youtube/status" style={{ color: 'var(--ink)' }}>
+            Connection diagnostics →
+          </Link>
+        </p>
       </header>
 
       {sp.connected === '1' && (
