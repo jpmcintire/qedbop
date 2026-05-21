@@ -1,0 +1,103 @@
+name: Database backup
+
+# Daily encrypted backup of the Neon Postgres database to Cloudflare R2.
+# Runs on GitHub's infrastructure (independent of Vercel/Neon), so a
+# compromise of either of those doesn't reach the backups. Dumps are
+# GPG-encrypted before upload, so even leaked R2 credentials can't read
+# them. A built-in verify step downloads + decrypts + validates each
+# backup right after upload, proving the whole chain on every run.
+
+on:
+  workflow_dispatch: {}            # manual "Run workflow" button (for testing)
+  schedule:
+    - cron: '0 7 * * *'            # daily at 07:00 UTC
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      # Newer AWS CLI adds integrity checksums that R2 rejects; only send
+      # them when strictly required.
+      AWS_REQUEST_CHECKSUM_CALCULATION: WHEN_REQUIRED
+      AWS_RESPONSE_CHECKSUM_VALIDATION: WHEN_REQUIRED
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      R2_BUCKET: ${{ secrets.R2_BACKUP_BUCKET }}
+      DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+      GPG_PASSPHRASE: ${{ secrets.BACKUP_GPG_PASSPHRASE }}
+    steps:
+      - name: Install PostgreSQL 17 client
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo gpg --dearmor -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Dump database
+        shell: bash
+        run: |
+          set -euo pipefail
+          STAMP="$(date -u +%Y-%m-%d_%H%M%S)"
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges -Fc -f "qedbop-$STAMP.dump"
+          ls -lh "qedbop-$STAMP.dump"
+
+      - name: Encrypt
+        shell: bash
+        run: |
+          set -euo pipefail
+          gpg --batch --yes --passphrase "$GPG_PASSPHRASE" \
+            --symmetric --cipher-algo AES256 \
+            -o "qedbop-$STAMP.dump.gpg" "qedbop-$STAMP.dump"
+          rm -f "qedbop-$STAMP.dump"
+
+      - name: Upload to R2 (daily, and monthly on the 1st)
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="qedbop-$STAMP.dump.gpg"
+          aws s3 cp "$FILE" "s3://$R2_BUCKET/daily/$FILE" --endpoint-url "$R2_ENDPOINT"
+          if [ "$(date -u +%d)" = "01" ]; then
+            aws s3 cp "$FILE" "s3://$R2_BUCKET/monthly/$FILE" --endpoint-url "$R2_ENDPOINT"
+          fi
+
+      - name: Verify (download, decrypt, validate)
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="qedbop-$STAMP.dump.gpg"
+          aws s3 cp "s3://$R2_BUCKET/daily/$FILE" "verify.dump.gpg" --endpoint-url "$R2_ENDPOINT"
+          gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -o "verify.dump" --decrypt "verify.dump.gpg"
+          echo "Archive contents (first 25 lines):"
+          pg_restore --list "verify.dump" | head -25
+          echo "VERIFY OK: backup uploaded, downloaded, decrypted, and is a valid pg_dump archive."
+
+      - name: Prune (keep 30 daily, 12 monthly)
+        shell: bash
+        run: |
+          set -euo pipefail
+          prune() {
+            local prefix="$1" keep="$2"
+            mapfile -t keys < <(aws s3 ls "s3://$R2_BUCKET/$prefix/" --endpoint-url "$R2_ENDPOINT" \
+              | awk '{print $4}' | grep -v '^$' | sort)
+            local n=${#keys[@]}
+            if (( n > keep )); then
+              for k in "${keys[@]:0:n-keep}"; do
+                echo "Pruning old backup: $prefix/$k"
+                aws s3 rm "s3://$R2_BUCKET/$prefix/$k" --endpoint-url "$R2_ENDPOINT"
+              done
+            fi
+          }
+          prune daily 30
+          prune monthly 12
