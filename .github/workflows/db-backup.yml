@@ -36,10 +36,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo install -d /usr/share/postgresql-common/pgdg
+          # apt accepts the armored .asc key directly via signed-by, so we
+          # avoid `gpg --dearmor` (which fails in CI: no /dev/tty).
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-            | sudo gpg --dearmor -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
-          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /usr/share/keyrings/pgdg.asc >/dev/null
+          echo "deb [signed-by=/usr/share/keyrings/pgdg.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
             | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
