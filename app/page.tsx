@@ -1,4 +1,11 @@
 import Link from 'next/link';
+import { POEMS } from '@/lib/poems';
+import {
+  SHOWCASE_LESSONS,
+  audienceTierLabel,
+  modeLabel,
+  type ShowcaseLesson,
+} from '@/lib/showcase';
 import { ConciergeForm } from './_components/ConciergeForm';
 
 export const metadata = {
@@ -9,10 +16,10 @@ export const metadata = {
 export default function Landing() {
   return (
     <main className="page">
-      <header style={{ marginTop: '2rem', marginBottom: '2.5rem' }}>
+      <header style={{ marginTop: '1rem', marginBottom: '1.75rem' }}>
         <span
           className="wordmark"
-          style={{ color: 'var(--ink)', fontSize: '3rem', display: 'block' }}
+          style={{ color: 'var(--ink)', fontSize: '2.5rem', display: 'block', lineHeight: 1 }}
         >
           qed&rsquo;bop
         </span>
@@ -21,32 +28,65 @@ export default function Landing() {
         </p>
       </header>
 
-      <section style={{ marginBottom: '2.5rem', maxWidth: '38rem' }}>
-        <h1
+      <section style={{ marginBottom: '2.25rem', maxWidth: '40rem' }}>
+        <p
           style={{
             fontFamily: 'Georgia, "Source Serif Pro", serif',
-            fontSize: '1.5rem',
-            fontWeight: 600,
-            margin: '0 0 0.5rem 0',
-            lineHeight: 1.3,
+            fontSize: '1.125rem',
+            lineHeight: 1.55,
+            margin: 0,
           }}
         >
-          What are you interested in teaching?
-        </h1>
-        <p style={{ color: 'var(--muted)', fontSize: '0.9375rem', marginBottom: '1.25rem' }}>
-          A poem, a poet, a theme, a literary work, a grade level — any of those work.
-          qed&rsquo;bop will suggest specific lessons from its library.
+          Three lessons, three audiences. Tap any to see the student link
+          and the teacher edition — including a prep podcast for the way
+          you&rsquo;re actually going to teach it.
+        </p>
+      </section>
+
+      <section className="showcase-grid" aria-label="Featured lessons">
+        {SHOWCASE_LESSONS.map((lesson) => (
+          <ShowcaseCard key={lesson.key} lesson={lesson} />
+        ))}
+      </section>
+
+      <section
+        style={{
+          marginTop: '3rem',
+          paddingTop: '2rem',
+          borderTop: '1px solid var(--rule)',
+          maxWidth: '38rem',
+        }}
+      >
+        <h2
+          style={{
+            fontFamily: 'Georgia, "Source Serif Pro", serif',
+            fontSize: '1.25rem',
+            fontWeight: 600,
+            margin: '0 0 0.375rem 0',
+          }}
+        >
+          Or tell us what you&rsquo;re teaching
+        </h2>
+        <p className="chrome" style={{ marginTop: 0, marginBottom: '1rem' }}>
+          A poem, a poet, a theme, a literary work, a grade level — qed&rsquo;bop
+          suggests specific lessons from the library.
         </p>
         <ConciergeForm />
       </section>
 
-      <p style={{ marginBottom: '4rem' }}>
-        <Link href="/build" className="chrome" style={{ color: 'var(--ink)' }}>
-          Or browse the library directly →
-        </Link>
-      </p>
+      <section style={{ marginTop: '2.5rem', maxWidth: '38rem' }}>
+        <p className="chrome" style={{ marginBottom: '0.25rem' }}>Build your own</p>
+        <p style={{ margin: 0, fontSize: '0.9375rem' }}>
+          <Link href="/build" style={{ color: 'var(--ink)' }}>
+            Browse the library directly →
+          </Link>
+        </p>
+      </section>
 
-      <footer className="hairline" style={{ paddingTop: '1.5rem' }}>
+      <footer
+        className="hairline"
+        style={{ marginTop: '3rem', paddingTop: '1.25rem' }}
+      >
         <p className="chrome">
           A teaching tool, not a tracking tool. Anonymous from the student&rsquo;s side.{' '}
           <Link href="/admin" style={{ color: 'inherit' }}>
@@ -55,5 +95,50 @@ export default function Landing() {
         </p>
       </footer>
     </main>
+  );
+}
+
+function ShowcaseCard({ lesson }: { lesson: ShowcaseLesson }) {
+  const poem = POEMS.find((p) => p.slug === lesson.poemSlug);
+  if (!poem) return null;
+
+  // Use the first video's YouTube thumbnail when there is one, otherwise
+  // render a stylized text placeholder so the card still composes.
+  const firstVideoId =
+    lesson.versionIds?.[0] ?? poem.versions[0]?.youtubeId ?? null;
+  const thumbnailUrl = firstVideoId
+    ? `https://i.ytimg.com/vi/${firstVideoId}/hqdefault.jpg`
+    : null;
+
+  return (
+    <Link href={`/showcase/${lesson.key}`} className="showcase-card">
+      <div className="thumb">
+        {thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={thumbnailUrl} alt="" loading="lazy" />
+        ) : (
+          <div className="placeholder">
+            {poem.title}
+            <br />
+            <span style={{ fontSize: '0.8125rem', opacity: 0.7 }}>
+              {poem.author}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="body">
+        <span className="audience-pill">{audienceTierLabel(lesson.audience)}</span>
+        <div className="modes">{lesson.modes.map(modeLabel).join(' · ')}</div>
+        <h3>{poem.title}</h3>
+        <p className="author">
+          {poem.author} &middot; {poem.year}
+        </p>
+        <p
+          className="blurb"
+          dangerouslySetInnerHTML={{ __html: lesson.blurb }}
+        />
+        <p className="cta">View this lesson →</p>
+      </div>
+    </Link>
   );
 }
