@@ -12,12 +12,13 @@ import type { PodcastScript } from './podcast-script';
 //   HOST_A → 'nova'  (warmer, female-presenting, conversational)
 //   HOST_B → 'onyx'  (deeper, male-presenting, analytical)
 //
-// Pricing (tts-1): roughly $0.000015 / character. A ~1800-word podcast
-// (~10,000 characters) runs ~$0.15. tts-1-hd is higher quality at 2x
-// price; tts-1 is the right default for v1.
+// Pricing (tts-1-hd): roughly $0.000030 / character. A ~1800-word
+// podcast (~10,000 characters) runs ~$0.30. The lower-tier tts-1 isn't
+// available in every OpenAI project; tts-1-hd is the safer default and
+// the audio quality is meaningfully better, so we standardize on it.
 
 const VOICES = { A: 'nova', B: 'onyx' } as const;
-const MODEL = 'tts-1'; // upgrade to 'tts-1-hd' if quality needs the bump
+const MODEL = 'tts-1-hd';
 
 const OPENAI_TTS_URL = 'https://api.openai.com/v1/audio/speech';
 // Hard cap per line; OpenAI's per-request limit is 4096 chars, well above
@@ -80,9 +81,9 @@ async function synthLine(
   return Buffer.from(arrayBuf);
 }
 
-// Per-podcast cost estimate at current OpenAI tts-1 pricing
-// ($15 / 1M characters as of 2026-05). Returned as USD; used to log to
+// Per-podcast cost estimate at current OpenAI tts-1-hd pricing
+// ($30 / 1M characters as of 2026-05). Returned as USD; used to log to
 // ApiUsage so /admin/usage sees podcast spend alongside Claude spend.
 export function estimateTtsCostUsd(totalChars: number): number {
-  return (totalChars * 15) / 1_000_000;
+  return (totalChars * 30) / 1_000_000;
 }
