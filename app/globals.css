@@ -80,3 +80,114 @@ body {
 ::selection {
   background: rgba(27, 27, 26, 0.12);
 }
+
+/* Showcase grid: mobile-first, single column on phones, three across on
+   desktop. Tablet (>=640px) goes 2 wide; full desktop (>=960px) goes 3. */
+.showcase-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+@media (min-width: 640px) {
+  .showcase-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .showcase-grid > :nth-child(3) { grid-column: span 2; }
+}
+@media (min-width: 960px) {
+  .showcase-grid { grid-template-columns: 1fr 1fr 1fr; }
+  .showcase-grid > :nth-child(3) { grid-column: auto; }
+}
+
+.showcase-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.showcase-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(27, 27, 26, 0.06);
+}
+.showcase-card .thumb {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  background: #000;
+  overflow: hidden;
+}
+.showcase-card .thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.showcase-card .thumb .placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1B1B1A, #3a3a36);
+  color: var(--paper);
+  font-family: Georgia, serif;
+  font-size: 1.125rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+  padding: 1rem;
+}
+.showcase-card .body { padding: 1.125rem 1.25rem 1.375rem 1.25rem; }
+.showcase-card .audience-pill {
+  display: inline-block;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 9999px;
+  background: rgba(27, 27, 26, 0.06);
+  color: var(--ink);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.showcase-card .modes {
+  margin-top: 0.625rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.showcase-card h3 {
+  font-family: Georgia, "Source Serif Pro", serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0.625rem 0 0.25rem 0;
+  line-height: 1.25;
+}
+.showcase-card .author {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: 0 0 0.75rem 0;
+}
+.showcase-card .blurb {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  margin: 0;
+  color: var(--ink);
+}
+.showcase-card .cta {
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+
+/* Tighten the page padding on small screens. */
+@media (max-width: 640px) {
+  .page { padding: 1.25rem 1rem; }
+}
+
