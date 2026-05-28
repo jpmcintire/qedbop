@@ -17,6 +17,7 @@ import {
   type ConciergeTurn,
   type ConciergeResponse,
 } from '@/lib/concierge';
+import { generatePrepPodcast as _generatePrepPodcast } from '@/lib/generate-prep-podcast';
 
 export async function fetchConcierge(
   query: string,
@@ -157,4 +158,36 @@ export async function fetchTeacherAsk({
     questions,
     history,
   });
+}
+
+export type PrepPodcastFetchResult =
+  | { ok: true; mp3Url: string; title: string; cached: boolean }
+  | { ok: false; error: string };
+
+export async function fetchPrepPodcast(args: {
+  slug: string;
+  audience: string;
+  versionIds: string[];
+  questions: string[];
+}): Promise<PrepPodcastFetchResult> {
+  try {
+    const poem = await getPoemEnriched(args.slug);
+    if (!poem) return { ok: false, error: `Unknown poem "${args.slug}".` };
+    const versions = poem.versions.filter((v) => args.versionIds.includes(v.youtubeId));
+    if (versions.length === 0) return { ok: false, error: 'No matching versions.' };
+
+    const res = await _generatePrepPodcast({
+      poem,
+      audience: args.audience,
+      versions,
+      questions: args.questions,
+    });
+    return { ok: true, mp3Url: res.mp3Url, title: res.title, cached: res.cached };
+  } catch (err) {
+    console.error('[fetchPrepPodcast]', err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Podcast generation failed.',
+    };
+  }
 }

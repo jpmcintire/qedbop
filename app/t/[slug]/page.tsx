@@ -10,6 +10,7 @@ import {
   type TeacherEditionOverrides,
 } from '@/lib/generate-teacher-edition';
 import { TeacherAsk } from './TeacherAsk';
+import { PrepPodcastButton } from './PrepPodcastButton';
 import { ProControls } from './ProControls';
 
 type Props = {
@@ -342,6 +343,12 @@ async function TeacherSections({
         >
           {edition.poetBio}
         </p>
+        <PrepPodcastButton
+          slug={slug}
+          audience={audience}
+          versionIds={versionIds}
+          questions={questions}
+        />
       </TeacherSection>
 
       <TeacherSection label="Historical context">

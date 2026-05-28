@@ -123,3 +123,22 @@ model YouTubeToken {
   updatedAt    DateTime @updatedAt
 }
 
+
+// Personalized prep podcast cached per teacher edition. The cacheKey is
+// a stable hash of the inputs that define the lesson (poem slug, audience,
+// chosen videos, exact questions), so the same lesson signature always
+// resolves to the same MP3 — generated once, served forever. mp3Url is
+// the public R2 URL; scriptJson keeps the dialogue for inspection and
+// regeneration.
+model PrepPodcast {
+  id          String   @id @default(cuid())
+  cacheKey    String   @unique
+  poemSlug    String
+  audience    String
+  mp3Url      String
+  scriptJson  String   @db.Text
+  durationSec Int?
+  createdAt   DateTime @default(now())
+
+  @@index([poemSlug])
+}
