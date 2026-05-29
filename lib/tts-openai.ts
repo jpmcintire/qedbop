@@ -8,17 +8,29 @@ import type { PodcastScript } from './podcast-script';
 // payloads is playable end-to-end (the seams aren't gapless, but for
 // a podcast that's imperceptible).
 //
-// Voice assignment:
-//   HOST_A → 'nova'  (warmer, female-presenting, conversational)
-//   HOST_B → 'onyx'  (deeper, male-presenting, analytical)
+// Voice assignment (gpt-4o-mini-tts):
+//   HOST_A → 'marin'  (clearer, brighter — the warmer "asks the
+//                      leading questions" voice)
+//   HOST_B → 'cedar'  (deeper, warmer — the analytical "explains the
+//                      moves" voice)
+// To try a different pair, swap to 'verse' here — 'cedar', 'marin',
+// and 'verse' are the three dramatic voices we standardized on.
 //
-// Pricing (tts-1-hd): roughly $0.000030 / character. A ~1800-word
-// podcast (~10,000 characters) runs ~$0.30. The lower-tier tts-1 isn't
-// available in every OpenAI project; tts-1-hd is the safer default and
-// the audio quality is meaningfully better, so we standardize on it.
+// INSTRUCTIONS prompt the model to deliver lines with a specific tone.
+// gpt-4o-mini-tts is the only OpenAI TTS that respects this parameter
+// (the older tts-1 family ignores it). We use it to lock in a
+// theatrical, audiobook-style delivery rather than the default flat
+// newscaster reading.
+//
+// Pricing (gpt-4o-mini-tts): billed per audio output token, roughly
+// $12 / 1M output tokens, where ~600 tokens ≈ 1 minute of audio. A
+// 10-minute podcast lands around $0.07 — substantially cheaper than
+// tts-1-hd ($0.30), with notably better voices.
 
-const VOICES = { A: 'nova', B: 'onyx' } as const;
-const MODEL = 'tts-1-hd';
+const VOICES = { A: 'marin', B: 'cedar' } as const;
+const MODEL = 'gpt-4o-mini-tts';
+const INSTRUCTIONS =
+  'Read with a dramatic, theatrical delivery. Vary pace and pitch with the meaning of each line, lean into emotionally charged phrases, and use pauses for emphasis. This is a teacher-prep podcast — two informed colleagues talking shop — so the tone is alive and committed, not lecturing.';
 
 const OPENAI_TTS_URL = 'https://api.openai.com/v1/audio/speech';
 // Hard cap per line; OpenAI's per-request limit is 4096 chars, well above
@@ -67,6 +79,7 @@ async function synthLine(
       model: MODEL,
       voice,
       input: text,
+      instructions: INSTRUCTIONS,
       response_format: 'mp3',
     }),
     cache: 'no-store',
@@ -81,9 +94,12 @@ async function synthLine(
   return Buffer.from(arrayBuf);
 }
 
-// Per-podcast cost estimate at current OpenAI tts-1-hd pricing
-// ($30 / 1M characters as of 2026-05). Returned as USD; used to log to
-// ApiUsage so /admin/usage sees podcast spend alongside Claude spend.
+// Per-podcast cost estimate for gpt-4o-mini-tts. The model bills per
+// audio output token (~$12 / 1M output tokens, ~600 tokens per minute
+// of audio), but we don't have the token count at synth time so we
+// approximate from the input character count: ~10,000 input chars
+// produces ~10 minutes of audio ≈ 6,000 output tokens ≈ $0.07. Used
+// for informational logging only.
 export function estimateTtsCostUsd(totalChars: number): number {
-  return (totalChars * 30) / 1_000_000;
+  return (totalChars * 7) / 1_000_000;
 }
