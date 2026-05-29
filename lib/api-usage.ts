@@ -10,6 +10,12 @@ const PRICING_PER_MTOK: Record<string, {
   cacheRead: number;
   cacheCreate: number;
 }> = {
+  'claude-opus-4-8': {
+    input: 15,
+    output: 75,
+    cacheRead: 1.5,
+    cacheCreate: 18.75,
+  },
   'claude-opus-4-7': {
     input: 15,
     output: 75,
