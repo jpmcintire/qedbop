@@ -6,6 +6,7 @@ import { prisma } from './db';
 // the dropdown on /admin/usage reads from MODELS, and lib/api-usage.ts
 // reads costs from PRICING_PER_MTOK below.
 export const MODELS = [
+  { id: 'claude-opus-4-8', label: 'Opus 4.8', tier: 'opus' },
   { id: 'claude-opus-4-7', label: 'Opus 4.7', tier: 'opus' },
   { id: 'claude-sonnet-4-6', label: 'Sonnet 4.6', tier: 'sonnet' },
   { id: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5', tier: 'haiku' },
@@ -35,10 +36,10 @@ export const COMPONENT_LABELS: Record<Component, string> = {
 // concierge and chat get Sonnet because they're matching/explaining
 // rather than reasoning under tight constraints.
 export const DEFAULT_MODEL: Record<Component, ModelId> = {
-  questions: 'claude-opus-4-7',
-  'single-question': 'claude-opus-4-7',
-  topics: 'claude-opus-4-7',
-  'teacher-edition': 'claude-opus-4-7',
+  questions: 'claude-opus-4-8',
+  'single-question': 'claude-opus-4-8',
+  topics: 'claude-opus-4-8',
+  'teacher-edition': 'claude-opus-4-8',
   'teacher-ask': 'claude-sonnet-4-6',
   concierge: 'claude-sonnet-4-6',
 };
