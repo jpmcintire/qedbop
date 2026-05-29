@@ -1,5 +1,5 @@
 :root {
-  --paper: #FBFAF7;
+  --paper: #FFFFFF;
   --ink: #1B1B1A;
   --rule: #E5E2DA;
   --muted: #6B6862;
@@ -23,9 +23,12 @@ body {
 }
 
 .wordmark {
-  font-family: Georgia, "Source Serif Pro", serif;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  /* Dongle is loaded by next/font in app/layout.tsx; the CSS variable
+     points at the localized font family with system serif as fallback. */
+  font-family: var(--font-dongle), Georgia, "Source Serif Pro", serif;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 .chrome {
