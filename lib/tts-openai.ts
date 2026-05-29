@@ -8,17 +8,29 @@ import type { PodcastScript } from './podcast-script';
 // payloads is playable end-to-end (the seams aren't gapless, but for
 // a podcast that's imperceptible).
 //
-// Voice assignment:
-//   HOST_A → 'nova'  (warmer, female-presenting, conversational)
-//   HOST_B → 'onyx'  (deeper, male-presenting, analytical)
+// Voice strategy: for each podcast generation we randomly pick TWO
+// voices from a curated pool (ballad, marin, cedar). Three voices, two
+// chosen at random per podcast = three possible unordered pairs and six
+// ordered (A,B) assignments, so consecutive listenable lessons feel
+// fresh rather than always the same two hosts. Cache keys are per-
+// lesson, so a given lesson keeps its initial voice pair on
+// re-listens; only newly generated podcasts roll the dice.
 //
-// Pricing (tts-1-hd): roughly $0.000030 / character. A ~1800-word
-// podcast (~10,000 characters) runs ~$0.30. The lower-tier tts-1 isn't
-// available in every OpenAI project; tts-1-hd is the safer default and
-// the audio quality is meaningfully better, so we standardize on it.
+// INSTRUCTIONS prompt the model to deliver lines with a specific tone.
+// gpt-4o-mini-tts is the only OpenAI TTS that respects this parameter
+// (the older tts-1 family ignores it). We lock in a theatrical,
+// audiobook-style delivery; without it, the model defaults to a flat
+// newscaster reading regardless of which voice is picked.
+//
+// Pricing is at the model level, not the voice level: gpt-4o-mini-tts
+// is roughly $12 / 1M output audio tokens (~600 tokens per minute of
+// audio), so a 10-minute podcast lands around $0.07. All voices on
+// this model cost the same.
 
-const VOICES = { A: 'nova', B: 'onyx' } as const;
-const MODEL = 'tts-1-hd';
+const VOICE_POOL = ['ballad', 'marin', 'cedar'] as const;
+const MODEL = 'gpt-4o-mini-tts';
+const INSTRUCTIONS =
+  'Read with a dramatic, theatrical delivery. Vary pace and pitch with the meaning of each line, lean into emotionally charged phrases, and use pauses for emphasis. This is a teacher-prep podcast — two informed colleagues talking shop — so the tone is alive and committed, not lecturing.';
 
 const OPENAI_TTS_URL = 'https://api.openai.com/v1/audio/speech';
 // Hard cap per line; OpenAI's per-request limit is 4096 chars, well above
@@ -29,22 +41,32 @@ const PER_LINE_CHAR_LIMIT = 4000;
 export type SynthResult = {
   buffer: Buffer;
   totalChars: number;
+  voices: { A: string; B: string };
 };
+
+// Returns two distinct voices from the pool, randomly. The shuffle is
+// per-call, so each podcast generation gets its own pair.
+function pickVoicePair(): { A: string; B: string } {
+  const shuffled = [...VOICE_POOL].sort(() => Math.random() - 0.5);
+  return { A: shuffled[0], B: shuffled[1] };
+}
 
 export async function synthesizePodcastMp3(script: PodcastScript): Promise<SynthResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not set');
+
+  const voices = pickVoicePair();
 
   // Synthesize each line in parallel. OpenAI's TTS rate limits are
   // generous enough for ~100-200 short calls; if we ever hit throttling
   // we can add a concurrency limiter, but a dialogue script's lines are
   // independent so parallelism is the natural shape.
   const chunks = await Promise.all(
-    script.lines.map((line, i) => synthLine(apiKey, line.text, VOICES[line.speaker], i))
+    script.lines.map((line, i) => synthLine(apiKey, line.text, voices[line.speaker], i))
   );
 
   const totalChars = script.lines.reduce((s, l) => s + l.text.length, 0);
-  return { buffer: Buffer.concat(chunks), totalChars };
+  return { buffer: Buffer.concat(chunks), totalChars, voices };
 }
 
 async function synthLine(
@@ -67,6 +89,7 @@ async function synthLine(
       model: MODEL,
       voice,
       input: text,
+      instructions: INSTRUCTIONS,
       response_format: 'mp3',
     }),
     cache: 'no-store',
@@ -81,9 +104,11 @@ async function synthLine(
   return Buffer.from(arrayBuf);
 }
 
-// Per-podcast cost estimate at current OpenAI tts-1-hd pricing
-// ($30 / 1M characters as of 2026-05). Returned as USD; used to log to
-// ApiUsage so /admin/usage sees podcast spend alongside Claude spend.
+// Per-podcast cost estimate for gpt-4o-mini-tts. Bills per audio output
+// token (~$12 / 1M tokens, ~600 tokens per minute of audio); we
+// approximate from input character count since the token count isn't
+// returned at synth time. ~10,000 input chars → ~10 min audio → ~6,000
+// output tokens → ~$0.07. Informational only.
 export function estimateTtsCostUsd(totalChars: number): number {
-  return (totalChars * 30) / 1_000_000;
+  return (totalChars * 7) / 1_000_000;
 }
