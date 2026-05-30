@@ -1,5 +1,10 @@
 import 'server-only';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+} from '@aws-sdk/client-s3';
 
 // Upload helper for the media R2 bucket. Reads its own env vars rather
 // than reusing the backup token, so the credential scope stays compart-
@@ -52,4 +57,45 @@ export async function uploadMedia(args: {
   const base = publicBase().replace(/\/$/, '');
   const url = base ? `${base}/${args.key}` : `r2://${bucket()}/${args.key}`;
   return { key: args.key, url };
+}
+
+// Delete every object under a given key prefix. R2's DeleteObjects API
+// accepts up to 1000 keys per call, so we paginate the list and chunk
+// the deletes. Returns the total number of objects removed. Used by
+// the admin "wipe prep podcasts" action when we want to invalidate
+// every cached MP3 (e.g. after a voice or script change).
+export async function deleteMediaPrefix(prefix: string): Promise<number> {
+  const c = client();
+  const b = bucket();
+  let removed = 0;
+  let continuationToken: string | undefined;
+
+  do {
+    const listed = await c.send(
+      new ListObjectsV2Command({
+        Bucket: b,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      })
+    );
+    const keys = (listed.Contents ?? [])
+      .map((o) => o.Key)
+      .filter((k): k is string => !!k);
+    if (keys.length > 0) {
+      // DeleteObjects accepts up to 1000 keys per call.
+      for (let i = 0; i < keys.length; i += 1000) {
+        const slice = keys.slice(i, i + 1000);
+        await c.send(
+          new DeleteObjectsCommand({
+            Bucket: b,
+            Delete: { Objects: slice.map((Key) => ({ Key })), Quiet: true },
+          })
+        );
+        removed += slice.length;
+      }
+    }
+    continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  return removed;
 }
