@@ -20,7 +20,7 @@ import type { Poem, Version } from './poems';
 // filenames → no DB or browser cache collision with the old MP3s.
 // Old DB rows + R2 files become orphans that the admin "wipe cached
 // prep podcasts" button cleans up.
-const PODCAST_VERSION = 'v2';
+const PODCAST_VERSION = 'v3';
 
 export type PrepPodcastResult = {
   mp3Url: string;
