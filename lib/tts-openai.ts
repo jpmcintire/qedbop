@@ -8,28 +8,29 @@ import type { PodcastScript } from './podcast-script';
 // payloads is playable end-to-end (the seams aren't gapless, but for
 // a podcast that's imperceptible).
 //
-// Model: tts-1-hd-1106 — the high-fidelity legacy TTS model. We'd
-// prefer gpt-4o-mini-tts (cheaper, honors per-line tone "instructions"
-// for dramatic delivery, ships warmer voices like ballad / marin),
-// but the OpenAI project tied to OPENAI_API_KEY doesn't have access
-// to it; only the tts-1-hd family is enabled. tts-1-hd ignores the
-// `instructions` param so we don't send it.
+// Voice strategy: the pool is currently two voices (ballad, marin).
+// Each podcast generation shuffles them and assigns Host A / Host B,
+// so the host-to-voice mapping varies even though both voices are
+// always used. The pickVoicePair() shape stays generic so we can add
+// more voices later without changing the orchestrator. Cache keys are
+// per-lesson, so a given lesson keeps its initial assignment on
+// re-listens; only newly generated podcasts roll the dice.
 //
-// Voice strategy: the pool is fable + nova — fable is the most
-// expressive male voice in the legacy set (British-leaning, theatrical),
-// nova the warmest female. Each podcast generation shuffles them and
-// assigns Host A / Host B, so the host-to-voice mapping varies even
-// though both voices are always used. Cache keys are per-lesson, so a
-// given lesson keeps its initial assignment on re-listens; only newly
-// generated podcasts roll the dice.
+// INSTRUCTIONS prompt the model to deliver lines with a specific tone.
+// gpt-4o-mini-tts is the only OpenAI TTS that respects this parameter
+// (the older tts-1 family ignores it). We lock in a theatrical,
+// audiobook-style delivery; without it, the model defaults to a flat
+// newscaster reading regardless of which voice is picked.
 //
-// Pricing: tts-1-hd is ~$30 / 1M input characters (~$0.30 per 10k chars).
-// A 10-minute podcast lands around ~$0.30. Higher than gpt-4o-mini-tts
-// (~$0.07) but the only option until the project's model access is
-// widened.
+// Pricing is at the model level, not the voice level: gpt-4o-mini-tts
+// is roughly $12 / 1M output audio tokens (~600 tokens per minute of
+// audio), so a 10-minute podcast lands around $0.07. All voices on
+// this model cost the same.
 
-const VOICE_POOL = ['fable', 'nova'] as const;
-const MODEL = 'tts-1-hd-1106';
+const VOICE_POOL = ['ballad', 'marin'] as const;
+const MODEL = 'gpt-4o-mini-tts';
+const INSTRUCTIONS =
+  'Read with a dramatic, theatrical delivery. Vary pace and pitch with the meaning of each line, lean into emotionally charged phrases, and use pauses for emphasis. This is a teacher-prep podcast — two informed colleagues talking shop — so the tone is alive and committed, not lecturing.';
 
 const OPENAI_TTS_URL = 'https://api.openai.com/v1/audio/speech';
 // Hard cap per line; OpenAI's per-request limit is 4096 chars, well above
@@ -88,6 +89,7 @@ async function synthLine(
       model: MODEL,
       voice,
       input: text,
+      instructions: INSTRUCTIONS,
       response_format: 'mp3',
     }),
     cache: 'no-store',
@@ -102,9 +104,11 @@ async function synthLine(
   return Buffer.from(arrayBuf);
 }
 
-// Per-podcast cost estimate for tts-1-hd. Bills per input character
-// at ~$30 / 1M chars. ~10,000 input chars → ~10 min audio → ~$0.30.
-// Informational only.
+// Per-podcast cost estimate for gpt-4o-mini-tts. Bills per audio output
+// token (~$12 / 1M tokens, ~600 tokens per minute of audio); we
+// approximate from input character count since the token count isn't
+// returned at synth time. ~10,000 input chars → ~10 min audio → ~6,000
+// output tokens → ~$0.07. Informational only.
 export function estimateTtsCostUsd(totalChars: number): number {
-  return (totalChars * 30) / 1_000_000;
+  return (totalChars * 7) / 1_000_000;
 }
