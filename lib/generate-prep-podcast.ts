@@ -14,7 +14,13 @@ import type { Poem, Version } from './poems';
 //
 // The cache key is deterministic over the inputs that actually shape the
 // podcast — same lesson signature = same MP3, generated once, served
-// forever.
+// forever. PODCAST_VERSION lets us invalidate every cached podcast in
+// one shot when voice config, script prompt, or any other generation
+// knob changes: bump the version → every cacheKey changes → new R2
+// filenames → no DB or browser cache collision with the old MP3s.
+// Old DB rows + R2 files become orphans that the admin "wipe cached
+// prep podcasts" button cleans up.
+const PODCAST_VERSION = 'v2';
 
 export type PrepPodcastResult = {
   mp3Url: string;
@@ -88,6 +94,7 @@ function computeCacheKey(args: {
   questions: string[];
 }): string {
   const canonical = JSON.stringify({
+    version: PODCAST_VERSION,
     slug: args.poem.slug,
     audience: args.audience,
     versions: args.versions

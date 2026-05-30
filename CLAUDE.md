@@ -188,7 +188,7 @@ Identical URLs → identical responses, served instantly. Changing any input →
 ## Operational facts
 
 - **Anthropic API key** lives in Railway env as `ANTHROPIC_API_KEY`. Set during the original platform attempt.
-- **Model**: `claude-opus-4-7` (hardcoded in each generator). When updating, change all three generators consistently.
+- **Model**: dispatched per-component via `lib/model-config.ts` (`DEFAULT_MODEL` map, overridable from `/admin/usage`). The standing policy is **default to the latest top-tier Opus available from Anthropic** for all generators that need rule-adherence (questions, single-question, topics, teacher-edition). Conversational / matching components (teacher-ask, concierge) stay on Sonnet for cost. **When a new top-tier Opus ships, bump `MODELS` + `DEFAULT_MODEL` in `lib/model-config.ts` in the same PR** — don't use `-latest` aliases (they silently change behavior and break the four mandatory rules without a test pass). Also add the new model's per-MTok prices to `PRICING_PER_MTOK` in `lib/api-usage.ts` so the cost dashboard stays accurate.
 - **Cost** (approximate, Opus 4.7):
   - Topic options call: ~$0.01
   - Question set generation (1-5 questions, with topics and lengths): ~$0.03-0.06
