@@ -8,12 +8,12 @@ import type { PodcastScript } from './podcast-script';
 // payloads is playable end-to-end (the seams aren't gapless, but for
 // a podcast that's imperceptible).
 //
-// Voice strategy: for each podcast generation we randomly pick TWO
-// voices from a curated pool (ballad, marin, cedar). Three voices, two
-// chosen at random per podcast = three possible unordered pairs and six
-// ordered (A,B) assignments, so consecutive listenable lessons feel
-// fresh rather than always the same two hosts. Cache keys are per-
-// lesson, so a given lesson keeps its initial voice pair on
+// Voice strategy: the pool is currently two voices (ballad, marin).
+// Each podcast generation shuffles them and assigns Host A / Host B,
+// so the host-to-voice mapping varies even though both voices are
+// always used. The pickVoicePair() shape stays generic so we can add
+// more voices later without changing the orchestrator. Cache keys are
+// per-lesson, so a given lesson keeps its initial assignment on
 // re-listens; only newly generated podcasts roll the dice.
 //
 // INSTRUCTIONS prompt the model to deliver lines with a specific tone.
@@ -27,7 +27,7 @@ import type { PodcastScript } from './podcast-script';
 // audio), so a 10-minute podcast lands around $0.07. All voices on
 // this model cost the same.
 
-const VOICE_POOL = ['ballad', 'marin', 'cedar'] as const;
+const VOICE_POOL = ['ballad', 'marin'] as const;
 const MODEL = 'gpt-4o-mini-tts';
 const INSTRUCTIONS =
   'Read with a dramatic, theatrical delivery. Vary pace and pitch with the meaning of each line, lean into emotionally charged phrases, and use pauses for emphasis. This is a teacher-prep podcast — two informed colleagues talking shop — so the tone is alive and committed, not lecturing.';
