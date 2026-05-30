@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { POEMS } from '@/lib/poems';
 import { prisma } from '@/lib/db';
+import { WipePrepPodcastsButton } from './WipePrepPodcastsButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,11 +70,15 @@ export default async function AdminPage() {
           API usage and cost →
         </Link>
       </p>
-      <p style={{ marginBottom: '2rem' }}>
+      <p style={{ marginBottom: '1rem' }}>
         <Link href="/admin/channel" className="chrome" style={{ color: 'var(--ink)' }}>
           YouTube channel — browse &amp; attach videos →
         </Link>
       </p>
+
+      <div style={{ marginBottom: '2rem' }}>
+        <WipePrepPodcastsButton />
+      </div>
 
       {POEMS.map((poem) => (
         <section key={poem.slug} style={{ marginBottom: '2.5rem' }}>

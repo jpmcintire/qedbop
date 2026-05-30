@@ -13,6 +13,7 @@ import {
 import { MODELS, type Component } from '@/lib/model-config';
 import { logIn, logOut, requireAdmin } from '@/lib/admin-auth';
 import { disconnect as disconnectYouTubeToken } from '@/lib/youtube-oauth';
+import { deleteMediaPrefix } from '@/lib/r2-media';
 
 export async function adminLogin(password: string): Promise<{ ok: boolean }> {
   const ok = await logIn(password);
@@ -282,4 +283,27 @@ export async function setModelOverride(input: z.infer<typeof ModelOverrideSchema
     // not fatal
   }
   return { ok: true };
+}
+
+export type WipeResult =
+  | { ok: true; rowsDeleted: number; filesDeleted: number }
+  | { ok: false; error: string };
+
+// Admin-only: wipes every cached prep podcast. Drops all PrepPodcast
+// DB rows AND deletes every object under the R2 prep-podcasts/
+// prefix. Use after a voice change, script change, or anything that
+// should invalidate the per-lesson cache.
+export async function wipePrepPodcasts(): Promise<WipeResult> {
+  await requireAdmin();
+  try {
+    const filesDeleted = await deleteMediaPrefix('prep-podcasts/');
+    const { count } = await prisma.prepPodcast.deleteMany({});
+    return { ok: true, rowsDeleted: count, filesDeleted };
+  } catch (err) {
+    console.error('[wipePrepPodcasts] failed:', err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Wipe failed.',
+    };
+  }
 }
