@@ -2,7 +2,7 @@ import { POEMS, AUDIENCES, type AudienceValue } from './poems';
 
 // Three pre-built showcase lessons for the front page. Each one is a
 // concrete (poem, audience, modes) configuration that demos a different
-// slice of qed'bop. Edit this list to change which lessons headline
+// slice of qed’bop. Edit this list to change which lessons headline
 // the site — the front page, launch page, and URL building all derive
 // from these entries.
 //

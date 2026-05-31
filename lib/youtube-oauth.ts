@@ -1,7 +1,7 @@
 import 'server-only';
 import { prisma } from './db';
 
-// OAuth against the qed'bop YouTube channel. The refresh token (stored
+// OAuth against the qed’bop YouTube channel. The refresh token (stored
 // once after the owner consents) lets us mint short-lived access tokens
 // on demand. Only owner-authenticated calls can enumerate unlisted
 // uploads, which an API key alone cannot see.

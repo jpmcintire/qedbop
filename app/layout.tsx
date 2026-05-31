@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Dongle } from 'next/font/google';
 import './globals.css';
 
-// Display font for the qed'bop wordmark. The thin, condensed character
+// Display font for the qed’bop wordmark. The thin, condensed character
 // gives the logo its identity. Body/UI type stays system sans.
 const dongle = Dongle({
   weight: ['300', '400', '700'],
@@ -12,7 +12,7 @@ const dongle = Dongle({
 });
 
 export const metadata: Metadata = {
-  title: "qed'bop",
+  title: "qed’bop",
   description: 'Public-domain poems set to music.',
 };
 

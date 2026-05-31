@@ -9,7 +9,7 @@ import {
 import { ConciergeForm } from './_components/ConciergeForm';
 
 export const metadata = {
-  title: "qed'bop",
+  title: "qed’bop",
   description: 'Shareable poem-and-music lessons for teachers.',
 };
 

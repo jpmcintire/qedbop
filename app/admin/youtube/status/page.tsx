@@ -4,7 +4,7 @@ import { getRedirectUri, buildConsentUrl, isConnected, getAccessToken } from '@/
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: "YouTube status — qed'bop",
+  title: "YouTube status — qed’bop",
   robots: { index: false, follow: false },
 };
 

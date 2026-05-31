@@ -6,7 +6,7 @@ import { WipePrepPodcastsButton } from './WipePrepPodcastsButton';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: "Admin — qed'bop",
+  title: "Admin — qed’bop",
   robots: { index: false, follow: false },
 };
 

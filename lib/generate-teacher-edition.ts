@@ -21,7 +21,7 @@ const TeacherEditionResponse = z.object({
 export type TeacherEdition = z.infer<typeof TeacherEditionResponse>;
 export type AgendaItemT = z.infer<typeof AgendaItem>;
 
-const SYSTEM_PROMPT = `You are generating supplementary teacher-edition content for an assignment on qed'bop, a platform that pairs public-domain poems with musical settings.
+const SYSTEM_PROMPT = `You are generating supplementary teacher-edition content for an assignment on qed’bop, a platform that pairs public-domain poems with musical settings.
 
 You produce four things, calibrated to the teacher's audience level:
 

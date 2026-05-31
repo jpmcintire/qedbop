@@ -18,9 +18,9 @@ type Props = {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const poem = getPoem(slug);
-  if (!poem) return { title: "qed'bop" };
+  if (!poem) return { title: "qed’bop" };
   return {
-    title: `${poem.title} — qed'bop`,
+    title: `${poem.title} — qed’bop`,
     description: `${poem.title} by ${poem.author}, with musical settings.`,
     robots: { index: false, follow: false },
   };

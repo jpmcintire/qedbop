@@ -23,7 +23,7 @@ const ScriptResponse = z.object({
 
 export type PodcastScript = z.infer<typeof ScriptResponse>;
 
-const SYSTEM_PROMPT = `You are writing a 10-minute prep podcast script for an English teacher who is about to teach a specific lesson on qed'bop. Two hosts trade off in a conversational tone:
+const SYSTEM_PROMPT = `You are writing a 10-minute prep podcast script for an English teacher who is about to teach a specific lesson on qed’bop. Two hosts trade off in a conversational tone:
 
 - HOST_A — the warmer voice, asks the leading questions, an experienced English teacher inviting the listener into each move.
 - HOST_B — the more analytical voice, explains the interpretive logic, the practitioner who has run this lesson before.
