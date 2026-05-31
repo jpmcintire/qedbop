@@ -6,7 +6,6 @@ import {
   modeLabel,
   type ShowcaseLesson,
 } from '@/lib/showcase';
-import { ConciergeForm } from './_components/ConciergeForm';
 import { TopNav } from './_components/TopNav';
 
 export const metadata = {
@@ -43,40 +42,6 @@ export default function Landing() {
         {SHOWCASE_LESSONS.map((lesson) => (
           <ShowcaseCard key={lesson.key} lesson={lesson} />
         ))}
-      </section>
-
-      <section
-        style={{
-          marginTop: '3rem',
-          paddingTop: '2rem',
-          borderTop: '1px solid var(--rule)',
-          maxWidth: '38rem',
-        }}
-      >
-        <h2
-          style={{
-            fontFamily: 'Georgia, "Source Serif Pro", serif',
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            margin: '0 0 0.375rem 0',
-          }}
-        >
-          Or tell us what you&rsquo;re teaching
-        </h2>
-        <p className="chrome" style={{ marginTop: 0, marginBottom: '1rem' }}>
-          A poem, a poet, a theme, a literary work, a grade level — qed&rsquo;bop
-          suggests specific lessons from the library.
-        </p>
-        <ConciergeForm />
-      </section>
-
-      <section style={{ marginTop: '2.5rem', maxWidth: '38rem' }}>
-        <p className="chrome" style={{ marginBottom: '0.25rem' }}>Build your own</p>
-        <p style={{ margin: 0, fontSize: '0.9375rem' }}>
-          <Link href="/library" style={{ color: 'var(--ink)' }}>
-            Browse the library directly →
-          </Link>
-        </p>
       </section>
 
       <footer
