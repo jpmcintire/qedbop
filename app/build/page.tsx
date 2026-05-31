@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { TopNav } from '../_components/TopNav';
+import { BuildLauncher, type LessonPreset } from './BuildLauncher';
 import {
   POEMS,
   AUDIENCES,
@@ -84,6 +85,33 @@ function BuilderPage() {
   const [customQuestionInput, setCustomQuestionInput] = useState('');
   const [generatingCustom, startGeneratingCustom] = useTransition();
   const [customQuestionError, setCustomQuestionError] = useState<string | null>(null);
+
+  // Launcher state. If the URL already carries builder state (a slug,
+  // mode, or selected video) we assume the teacher arrived from an
+  // editable URL or a preset and skip the launcher. Otherwise we show
+  // the three-option launcher first so they aren't dropped into a
+  // 9-step form cold.
+  const [launcherShown, setLauncherShown] = useState<boolean>(() => {
+    return !(sp.has('slug') || sp.has('mode') || sp.has('v'));
+  });
+
+  // Maps a preset choice onto builder defaults, then dismisses the
+  // launcher. The current presets don't drive radically different
+  // builder shapes yet — they nudge mode and audience. Future
+  // refinements (per-preset topic seeding, question-prompt tuning,
+  // multi-poem support) layer in here without changing the UX.
+  function handlePickPreset(preset: LessonPreset) {
+    if (preset === 'memorization') {
+      // Basic mode is calibrated for middle school + short outputs —
+      // exactly the memorization-friendly shape.
+      setMode('basic');
+    } else if (preset === 'analysis') {
+      setMode('custom');
+    } else if (preset === 'two-settings') {
+      setMode('custom');
+    }
+    setLauncherShown(false);
+  }
 
   // ----- Derived -----
 
@@ -300,6 +328,15 @@ function BuilderPage() {
     audienceLabel(audience) ?? audience;
 
   // ----- Render -----
+
+  if (launcherShown) {
+    return (
+      <main className="page">
+        <TopNav current="build" />
+        <BuildLauncher onPickPreset={handlePickPreset} />
+      </main>
+    );
+  }
 
   return (
     <main className="page">
