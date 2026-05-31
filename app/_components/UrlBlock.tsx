@@ -49,20 +49,6 @@ export function UrlBlock({ label, description, relativeUrl, accent }: Props) {
       >
         {description}
       </p>
-      <code
-        style={{
-          display: 'block',
-          padding: '0.625rem 0.875rem',
-          background: '#F2EFE7',
-          borderRadius: '0.375rem',
-          fontSize: '0.75rem',
-          wordBreak: 'break-all',
-          lineHeight: 1.5,
-          marginBottom: '0.75rem',
-        }}
-      >
-        {fullUrl}
-      </code>
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         <button type="button" className="btn" onClick={copy}>
           {copied ? 'Copied' : 'Copy URL'}
