@@ -10,9 +10,11 @@ import { SignInMenu } from './SignInMenu';
 // (/a/[slug]) — the brand rule is "no chrome" for students — or on
 // admin pages, which have their own context.
 //
-// `current` underlines the active item so the teacher always knows
-// where they are without scanning the URL. "My lessons" only renders
-// when a fake-auth identity is signed in.
+// All text items are flex siblings with `alignItems: 'baseline'` so
+// the wordmark (1.5× the nav-text size) and the smaller nav links
+// share the same typographic baseline and read straight across. The
+// SignInMenu uses `alignSelf: 'center'` so its button chip stays
+// vertically centered to the row instead of sitting on the baseline.
 
 export type NavKey = 'home' | 'library' | 'build' | 'lessons' | 'none';
 
@@ -35,7 +37,7 @@ export function TopNav({ current = 'none' }: { current?: NavKey }) {
     <nav
       style={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'baseline',
         gap: '1.5rem',
         marginBottom: '2rem',
         flexWrap: 'wrap',
@@ -46,48 +48,43 @@ export function TopNav({ current = 'none' }: { current?: NavKey }) {
         href="/"
         className="wordmark"
         style={{
-          color: 'var(--ink)',
+          ...textItemStyle,
           fontSize: '1.5rem',
-          textDecoration: 'none',
-          borderBottom: current === 'home' ? '2px solid var(--ink)' : '2px solid transparent',
-          lineHeight: 1.2,
+          color: 'var(--ink)',
+          borderBottomColor: current === 'home' ? 'var(--ink)' : 'transparent',
         }}
       >
         qed&rsquo;bop
       </Link>
-      <ul
-        style={{
-          display: 'flex',
-          gap: '1.25rem',
-          listStyle: 'none',
-          padding: 0,
-          margin: 0,
-          flexWrap: 'wrap',
-        }}
-      >
-        {items.map((item) => (
-          <li key={item.key}>
-            <Link
-              href={item.href}
-              style={{
-                fontSize: '0.9375rem',
-                color: current === item.key ? 'var(--ink)' : 'var(--muted)',
-                textDecoration: 'none',
-                paddingBottom: '0.125rem',
-                borderBottom:
-                  current === item.key
-                    ? '2px solid var(--ink)'
-                    : '2px solid transparent',
-              }}
-            >
-              {item.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <div style={{ marginLeft: 'auto' }}>
+      {items.map((item) => (
+        <Link
+          key={item.key}
+          href={item.href}
+          style={{
+            ...textItemStyle,
+            fontSize: '1rem',
+            color: current === item.key ? 'var(--ink)' : 'var(--muted)',
+            borderBottomColor: current === item.key ? 'var(--ink)' : 'transparent',
+          }}
+        >
+          {item.label}
+        </Link>
+      ))}
+      <div style={{ marginLeft: 'auto', alignSelf: 'center' }}>
         <SignInMenu />
       </div>
     </nav>
   );
 }
+
+// Shared styling for nav text items. line-height: 1 keeps each item's
+// box flush with its glyphs so baseline alignment isn't disrupted by
+// extra leading on the larger wordmark. paddingBottom + a 2px
+// border-bottom gives every item the same underline offset from the
+// baseline, so the active indicator looks identical across sizes.
+const textItemStyle: React.CSSProperties = {
+  textDecoration: 'none',
+  lineHeight: 1,
+  paddingBottom: '0.2rem',
+  borderBottom: '2px solid transparent',
+};
