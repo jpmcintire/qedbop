@@ -46,14 +46,16 @@ export default function Landing() {
 
       <footer
         className="hairline"
-        style={{ marginTop: '3rem', paddingTop: '1.25rem' }}
+        style={{
+          marginTop: '3rem',
+          paddingTop: '1.25rem',
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}
       >
-        <p className="chrome">
-          A teaching tool, not a tracking tool. Anonymous from the student&rsquo;s side.{' '}
-          <Link href="/admin" style={{ color: 'inherit' }}>
-            Admin
-          </Link>
-        </p>
+        <Link href="/admin" className="chrome" style={{ color: 'inherit' }}>
+          Admin
+        </Link>
       </footer>
     </main>
   );
