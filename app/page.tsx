@@ -77,7 +77,7 @@ export default function Landing() {
       <section style={{ marginTop: '2.5rem', maxWidth: '38rem' }}>
         <p className="chrome" style={{ marginBottom: '0.25rem' }}>Build your own</p>
         <p style={{ margin: 0, fontSize: '0.9375rem' }}>
-          <Link href="/build" style={{ color: 'var(--ink)' }}>
+          <Link href="/library" style={{ color: 'var(--ink)' }}>
             Browse the library directly →
           </Link>
         </p>
