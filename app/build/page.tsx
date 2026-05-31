@@ -1,8 +1,8 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useRef, useState, useTransition } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { TopNav } from '../_components/TopNav';
 import {
   POEMS,
   AUDIENCES,
@@ -303,16 +303,7 @@ function BuilderPage() {
 
   return (
     <main className="page">
-      <header style={{ marginBottom: '1.5rem' }}>
-        <Link
-          href="/"
-          className="wordmark"
-          style={{ color: 'var(--ink)', fontSize: '1.5rem', textDecoration: 'none' }}
-        >
-          qed&rsquo;bop
-        </Link>
-        <p className="chrome" style={{ marginTop: '0.25rem' }}>Build a lesson</p>
-      </header>
+      <TopNav current="build" />
 
       <ModeToggle mode={mode} setMode={setMode} />
 
