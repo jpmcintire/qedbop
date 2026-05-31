@@ -223,7 +223,7 @@ And miles to go before I sleep.`,
     year: 1914,
     // PASTE: full text of Mending Wall (Project Gutenberg / Poetry Foundation).
     text: ``,
-    // Filler removed. Attach the qed'bop channel settings via /admin/channel.
+    // Filler removed. Attach the qed’bop channel settings via /admin/channel.
     versions: [],
     questions: [
       'The poem opens with "Something there is that doesn\'t love a wall" and closes with the neighbor\'s "Good fences make good neighbors." Which line does the poem itself believe?',
@@ -243,7 +243,7 @@ And miles to go before I sleep.`,
     year: 1897,
     // PASTE: full text of Richard Cory (Project Gutenberg / Poetry Foundation).
     text: ``,
-    // Filler removed. Attach the qed'bop channel settings via /admin/channel.
+    // Filler removed. Attach the qed’bop channel settings via /admin/channel.
     versions: [],
     questions: [
       'Robinson controls every word of his portrait of Cory until the final line. What does the form of that withholding accomplish that a longer poem could not?',
@@ -263,7 +263,7 @@ And miles to go before I sleep.`,
     year: 1818,
     // PASTE: full text of Ozymandias (Project Gutenberg / Poetry Foundation).
     text: ``,
-    // Filler removed. Attach the qed'bop channel settings via /admin/channel.
+    // Filler removed. Attach the qed’bop channel settings via /admin/channel.
     versions: [],
     questions: [
       'The poem has four narrators stacked inside each other: Shelley, the speaker, the traveler, and the king\'s inscription. What does that nesting accomplish?',
@@ -283,7 +283,7 @@ And miles to go before I sleep.`,
     year: 1794,
     // PASTE: full text of The Tyger (Project Gutenberg / Poetry Foundation).
     text: ``,
-    // Filler removed. Attach the qed'bop channel settings via /admin/channel.
+    // Filler removed. Attach the qed’bop channel settings via /admin/channel.
     versions: [],
     questions: [
       'The poem consists almost entirely of questions and never gives an answer. What kind of inquiry refuses its own conclusion, and what does that refusal do?',
@@ -303,7 +303,7 @@ And miles to go before I sleep.`,
     year: 1845,
     // PASTE: full text of The Raven (Project Gutenberg / Poetry Foundation).
     text: ``,
-    // Filler removed. Attach the qed'bop channel settings via /admin/channel.
+    // Filler removed. Attach the qed’bop channel settings via /admin/channel.
     versions: [],
     questions: [
       'The poem repeats "Nevermore" as the bird\'s only word, but the meaning shifts with each repetition. Track three repetitions and describe how each one means something different.',

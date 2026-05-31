@@ -12,7 +12,7 @@ import { ModelPicker } from './ModelPicker';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: "Usage — qed'bop",
+  title: "Usage — qed’bop",
   robots: { index: false, follow: false },
 };
 

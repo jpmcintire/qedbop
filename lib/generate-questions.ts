@@ -17,7 +17,7 @@ const AUDIENCE_GUIDANCE: Record<string, string> = {
     'Engage with theoretical framing, intertextuality, and the relationship between source text and musical interpretation as a form of criticism. Assume sophisticated readers comfortable with critical theory. Questions can be provocative and assume the student will bring outside texts to bear.',
 };
 
-const SYSTEM_PROMPT = `You are a curriculum designer for qed'bop, which pairs public-domain poems with musical settings on YouTube. You generate discussion questions calibrated to a specific audience level.
+const SYSTEM_PROMPT = `You are a curriculum designer for qed’bop, which pairs public-domain poems with musical settings on YouTube. You generate discussion questions calibrated to a specific audience level.
 
 Four non-negotiable rules govern every question set you produce:
 

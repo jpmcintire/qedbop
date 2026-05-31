@@ -9,7 +9,7 @@ import { DisconnectButton } from './DisconnectButton';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: "Channel — qed'bop",
+  title: "Channel — qed’bop",
   robots: { index: false, follow: false },
 };
 

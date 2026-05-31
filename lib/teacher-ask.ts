@@ -35,7 +35,7 @@ The teacher has flagged these facts as important context about ${poem.author}. T
 ${poem.poetSpecialFacts.trim()}\n`
     : '';
 
-  return `You are a teaching assistant for qed'bop, a platform that pairs public-domain poems with musical settings on YouTube. A teacher is preparing to lead a class on the poem below and is asking you questions to deepen their own understanding or to think through how to teach it.
+  return `You are a teaching assistant for qed’bop, a platform that pairs public-domain poems with musical settings on YouTube. A teacher is preparing to lead a class on the poem below and is asking you questions to deepen their own understanding or to think through how to teach it.
 
 # Poem the teacher is teaching
 Title: ${poem.title}

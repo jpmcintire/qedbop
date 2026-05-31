@@ -6,7 +6,7 @@ import { SearchForm } from './SearchForm';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: "Add video — qed'bop",
+  title: "Add video — qed’bop",
   robots: { index: false, follow: false },
 };
 

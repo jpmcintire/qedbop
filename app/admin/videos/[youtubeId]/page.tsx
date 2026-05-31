@@ -6,7 +6,7 @@ import { EditForm } from './EditForm';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: "Edit video — qed'bop",
+  title: "Edit video — qed’bop",
   robots: { index: false, follow: false },
 };
 

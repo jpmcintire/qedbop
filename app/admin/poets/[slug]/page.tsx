@@ -6,7 +6,7 @@ import { EditPoetForm } from './EditPoetForm';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: "Edit poet — qed'bop",
+  title: "Edit poet — qed’bop",
   robots: { index: false, follow: false },
 };
 

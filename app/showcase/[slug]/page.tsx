@@ -14,7 +14,7 @@ import { UrlBlock } from '@/app/_components';
 type Props = { params: Promise<{ slug: string }> };
 
 export const metadata = {
-  title: "Lesson — qed'bop",
+  title: "Lesson — qed’bop",
   description: 'A showcase lesson on qed’bop.',
 };
 

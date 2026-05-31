@@ -9,7 +9,7 @@ const TopicsResponse = z.object({
   topics: z.array(z.string().min(1).max(80)).min(3).max(12),
 });
 
-const SYSTEM_PROMPT = `You are a curriculum designer for qed'bop, which pairs public-domain poems with musical settings. Your job is to suggest discussion TOPIC AREAS for a given poem and audience level. Topics will appear as checkboxes for a teacher to select; selected topics will then drive the discussion questions in the assignment.
+const SYSTEM_PROMPT = `You are a curriculum designer for qed’bop, which pairs public-domain poems with musical settings. Your job is to suggest discussion TOPIC AREAS for a given poem and audience level. Topics will appear as checkboxes for a teacher to select; selected topics will then drive the discussion questions in the assignment.
 
 Return strictly JSON. No prose before or after. No markdown fences.`;
 
