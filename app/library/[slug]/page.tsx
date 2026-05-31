@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPoem } from '@/lib/poems';
 import { getPoemEnriched } from '@/lib/poems-runtime';
+import { TopNav } from '../../_components/TopNav';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -24,14 +25,15 @@ export default async function LibraryPoemPage({ params }: Props) {
 
   return (
     <main className="page">
+      <TopNav current="library" />
       <header style={{ marginBottom: '2.5rem' }}>
-        <p style={{ marginBottom: '0.25rem' }}>
+        <p style={{ marginBottom: '0.5rem' }}>
           <Link
             href="/library"
             className="chrome"
             style={{ color: 'var(--muted)', textDecoration: 'none' }}
           >
-            ← Library
+            ← Back to library
           </Link>
         </p>
         <p className="chrome" style={{ marginBottom: '0.25rem' }}>

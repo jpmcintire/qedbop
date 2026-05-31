@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { POEMS } from '@/lib/poems';
 import { prisma } from '@/lib/db';
 import { LibraryBrowser } from './LibraryBrowser';
+import { TopNav } from '../_components/TopNav';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,16 +36,7 @@ export default async function LibraryPage() {
 
   return (
     <main className="page">
-      <header style={{ marginBottom: '2rem' }}>
-        <Link
-          href="/"
-          className="wordmark"
-          style={{ color: 'var(--ink)', fontSize: '1.5rem', textDecoration: 'none' }}
-        >
-          qed&rsquo;bop
-        </Link>
-        <p className="chrome" style={{ marginTop: '0.25rem' }}>Library</p>
-      </header>
+      <TopNav current="library" />
 
       <p style={{ color: 'var(--muted)', maxWidth: '46rem', marginBottom: '2rem' }}>
         Every poem in the catalog, with how many musical settings exist for each. Click a poem to read it and listen.

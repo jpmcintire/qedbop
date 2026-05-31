@@ -7,6 +7,7 @@ import {
   type ShowcaseLesson,
 } from '@/lib/showcase';
 import { ConciergeForm } from './_components/ConciergeForm';
+import { TopNav } from './_components/TopNav';
 
 export const metadata = {
   title: "qed’bop",
@@ -16,14 +17,9 @@ export const metadata = {
 export default function Landing() {
   return (
     <main className="page">
-      <header style={{ marginTop: '1rem', marginBottom: '1.75rem' }}>
-        <span
-          className="wordmark"
-          style={{ color: 'var(--ink)', fontSize: '2.5rem', display: 'block', lineHeight: 1 }}
-        >
-          qed&rsquo;bop
-        </span>
-        <p className="chrome" style={{ marginTop: '0.5rem' }}>
+      <TopNav current="home" />
+      <header style={{ marginBottom: '1.75rem' }}>
+        <p className="chrome" style={{ margin: 0 }}>
           Poems set to music · lessons that demand close listening
         </p>
       </header>

@@ -1,9 +1,9 @@
 import { Suspense } from 'react';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { audienceLabel, lengthLabel } from '@/lib/poems';
 import { getPoemEnriched } from '@/lib/poems-runtime';
 import { isExpired, formatExpirationFriendly } from '@/lib/expiration';
+import { TopNav } from '../../_components/TopNav';
 import {
   generateTeacherEdition,
   type TeacherEdition,
@@ -98,6 +98,7 @@ export default async function TeacherPage({ params, searchParams }: Props) {
 
   return (
     <main className="page">
+      <TopNav />
       <TeacherHeader studentUrl={studentUrl} expiresOn={expiresOn} isPro={isPro} />
       <ProControls
         isPro={isPro}
@@ -233,18 +234,9 @@ function TeacherHeader({
           gap: '1rem',
         }}
       >
-        <div>
-          <Link
-            href="/"
-            className="wordmark"
-            style={{ color: 'var(--ink)', fontSize: '1.25rem', textDecoration: 'none' }}
-          >
-            qed&rsquo;bop
-          </Link>
-          <p className="chrome" style={{ marginTop: '0.25rem' }}>
-            Teacher edition {isPro ? '— Pro' : '— Basic'}
-          </p>
-        </div>
+        <p className="chrome" style={{ margin: 0 }}>
+          Teacher edition {isPro ? '— Pro' : '— Basic'}
+        </p>
         <a
           href={studentUrl}
           target="_blank"
@@ -536,15 +528,7 @@ function QuestionCommentaryLoading({
 function ExpiredCard({ expIso }: { expIso: string | undefined }) {
   return (
     <main className="page">
-      <header style={{ marginBottom: '2.5rem' }}>
-        <Link
-          href="/"
-          className="wordmark"
-          style={{ color: 'var(--ink)', fontSize: '1.25rem', textDecoration: 'none' }}
-        >
-          qed&rsquo;bop
-        </Link>
-      </header>
+      <TopNav />
       <article style={{ maxWidth: '38rem' }}>
         <p className="chrome" style={{ marginBottom: '0.5rem' }}>Expired</p>
         <h1
