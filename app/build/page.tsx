@@ -4,6 +4,8 @@ import { Suspense, useEffect, useMemo, useRef, useState, useTransition } from 'r
 import { useSearchParams } from 'next/navigation';
 import { TopNav } from '../_components/TopNav';
 import { BuildLauncher, type LessonPreset } from './BuildLauncher';
+import { getIdentity } from '@/lib/identity-client';
+import { saveLesson } from '@/lib/lessons-store';
 import {
   POEMS,
   AUDIENCES,
@@ -154,6 +156,26 @@ function BuilderPage() {
       cancelled = true;
     };
   }, [slug, audience]);
+
+  // Auto-save to "My lessons" once questions exist for the active
+  // identity. lessons-store dedupes by (poemSlug + videoIds) so
+  // editing existing questions updates the same entry instead of
+  // piling up duplicates; switching poems or adding a video creates
+  // a new entry. No-op when signed out.
+  useEffect(() => {
+    const identity = getIdentity();
+    if (!identity) return;
+    if (!slug || picked.length === 0 || edited.length === 0) return;
+    saveLesson(identity, {
+      poemSlug: slug,
+      audience,
+      mode,
+      videoIds: picked,
+      lengths: selectedLengths,
+      questions: edited,
+      exp: expiration || null,
+    });
+  }, [slug, picked, edited, audience, selectedLengths, expiration, mode]);
 
   // ----- Handlers -----
 
