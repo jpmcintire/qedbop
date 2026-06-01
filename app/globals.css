@@ -194,3 +194,108 @@ body {
   .page { padding: 1.25rem 1rem; }
 }
 
+/* By default the video URL fallback under each embed is hidden (the
+   actual iframe shows the player). Print mode shows it instead. */
+.video-print-fallback { display: none; }
+
+/* Print styles.
+   - Hide the qed'bop nav, sign-in chrome, footers, builder-only chrome.
+   - Drop video iframes entirely (they don't print anyway); show the
+     youtube.com/watch?v=... fallback URL underneath each "Listen"
+     entry so the teacher / student can still reach the audio.
+   - Switch body to serif at print-friendly size with black ink on
+     white paper, no tinting.
+   - Page-break rules: keep each question on one page when possible,
+     keep section headings with their content, start the poem text
+     on a fresh page on /a/ since it's reference material at the end.
+   - Builder, library, admin, and other authoring routes don't get
+     special print rules; only the student page (/a) and the teacher
+     edition (/t) are designed to be printed. */
+@media print {
+  :root {
+    --paper: #FFFFFF;
+    --ink: #000000;
+    --rule: #999999;
+    --muted: #444444;
+  }
+
+  html, body {
+    background: #FFFFFF;
+    color: #000000;
+  }
+
+  body {
+    font-family: Georgia, "Source Serif Pro", serif;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+
+  .page {
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Strip global chrome */
+  nav[aria-label="Main navigation"],
+  nav[aria-label="Builder breadcrumb"],
+  .no-print,
+  .video-frame {
+    display: none !important;
+  }
+
+  /* Show the YouTube URL fallback under each listen entry */
+  .video-print-fallback {
+    display: block;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 9pt;
+    color: #444;
+  }
+
+  /* Headings inherit serif & ink */
+  h1, h2, h3 {
+    color: #000;
+    page-break-after: avoid;
+  }
+  h1 { font-size: 18pt; }
+  h2 { font-size: 14pt; }
+  h3 { font-size: 12pt; }
+
+  /* Questions: keep each one whole; tighten spacing for print */
+  .questions-list li {
+    page-break-inside: avoid;
+    margin-bottom: 0.6rem !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Poem block prints in serif with stanza breaks intact. Slightly
+     tighter line-height than screen since paper handles it well. */
+  .poem {
+    font-size: 11pt;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  /* On /a/ the poem comes at the end as reference; nice to have it
+     start fresh on its own page (when the questions don't fill the
+     prior page). Browsers honor this best-effort. */
+  .poem-reference {
+    page-break-before: auto;
+    break-before: auto;
+  }
+
+  /* Hide builder / teacher controls that don't make sense in print */
+  .teacher-ask, .pro-controls, .prep-podcast { display: none !important; }
+
+  a { color: #000; text-decoration: none; }
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #555;
+  }
+
+  /* Hide the wordmark link's URL annotation (it'd say "(/)") */
+  .wordmark::after { content: none !important; }
+}
+

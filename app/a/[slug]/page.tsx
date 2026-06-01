@@ -57,7 +57,7 @@ export default async function ViewerPage({ params, searchParams }: Props) {
 
   return (
     <main className="page">
-      <header style={{ marginBottom: '2.5rem' }}>
+      <header className="no-print" style={{ marginBottom: '2.5rem' }}>
         <Link
           href="/"
           className="wordmark"
@@ -89,11 +89,7 @@ export default async function ViewerPage({ params, searchParams }: Props) {
           {poem.author} &middot; {poem.year}
         </p>
 
-        <section style={{ marginTop: '2.5rem', maxWidth: '38rem' }}>
-          <pre className="poem">{poem.text}</pre>
-        </section>
-
-        <section style={{ marginTop: '3rem' }}>
+        <section style={{ marginTop: '2.5rem' }} className="listen-section">
           <p className="chrome" style={{ marginBottom: '1rem' }}>Listen</p>
           <div
             style={{
@@ -106,7 +102,7 @@ export default async function ViewerPage({ params, searchParams }: Props) {
             {versions.map((ver) => (
               <div key={ver.youtubeId}>
                 <p className="chrome" style={{ marginBottom: '0.5rem' }}>{ver.label}</p>
-                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+                <div className="video-frame" style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
                   <iframe
                     src={`https://www.youtube-nocookie.com/embed/${ver.youtubeId}`}
                     title={`${poem.title} — ${ver.label}`}
@@ -122,13 +118,16 @@ export default async function ViewerPage({ params, searchParams }: Props) {
                     }}
                   />
                 </div>
+                <p className="video-print-fallback chrome" style={{ marginTop: '0.375rem' }}>
+                  youtube.com/watch?v={ver.youtubeId}
+                </p>
               </div>
             ))}
           </div>
         </section>
 
         {questions.length > 0 && (
-          <section style={{ marginTop: '3rem' }}>
+          <section style={{ marginTop: '3rem' }} className="discussion-section">
             <p className="chrome" style={{ marginBottom: '0.5rem' }}>Discussion</p>
             {lengthLabels.length > 0 && (
               <p
@@ -154,6 +153,7 @@ export default async function ViewerPage({ params, searchParams }: Props) {
               &ldquo;The song felt sad&rdquo; is not enough.
             </p>
             <ol
+              className="questions-list"
               style={{
                 fontFamily: 'Georgia, "Source Serif Pro", serif',
                 fontSize: '1.0625rem',
@@ -171,7 +171,15 @@ export default async function ViewerPage({ params, searchParams }: Props) {
           </section>
         )}
 
-        <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
+        <section
+          className="poem-reference"
+          style={{ marginTop: '3rem', maxWidth: '38rem' }}
+        >
+          <p className="chrome" style={{ marginBottom: '0.5rem' }}>Poem text (for reference)</p>
+          <pre className="poem">{poem.text}</pre>
+        </section>
+
+        <footer className="hairline no-print" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
           <p className="chrome">
             Built with qed&rsquo;bop &middot;{' '}
             <Link href="/build" style={{ color: 'inherit' }}>make your own</Link>

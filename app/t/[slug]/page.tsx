@@ -96,12 +96,14 @@ export default async function TeacherPage({ params, searchParams }: Props) {
         isPro={isPro}
         qrCaption={`${poem.title}${audience ? ` — ${audience}` : ''}`}
       />
-      <ProControls
-        isPro={isPro}
-        agendaMinutes={agendaMinutes}
-        bioDepth={bioDepth}
-        contextDepth={contextDepth}
-      />
+      <div className="no-print">
+        <ProControls
+          isPro={isPro}
+          agendaMinutes={agendaMinutes}
+          bioDepth={bioDepth}
+          contextDepth={contextDepth}
+        />
+      </div>
 
       <article>
         {audience && (
@@ -153,7 +155,7 @@ export default async function TeacherPage({ params, searchParams }: Props) {
             {versions.map((ver) => (
               <div key={ver.youtubeId}>
                 <p className="chrome" style={{ marginBottom: '0.5rem' }}>{ver.label}</p>
-                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+                <div className="video-frame" style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
                   <iframe
                     src={`https://www.youtube-nocookie.com/embed/${ver.youtubeId}`}
                     title={`${poem.title} — ${ver.label}`}
@@ -169,6 +171,9 @@ export default async function TeacherPage({ params, searchParams }: Props) {
                     }}
                   />
                 </div>
+                <p className="video-print-fallback chrome" style={{ marginTop: '0.375rem' }}>
+                  youtube.com/watch?v={ver.youtubeId}
+                </p>
               </div>
             ))}
           </div>
@@ -187,14 +192,16 @@ export default async function TeacherPage({ params, searchParams }: Props) {
           </Suspense>
         )}
 
-        <TeacherAsk
-          slug={poem.slug}
-          audience={audienceSlug}
-          versionIds={videoIds}
-          questions={questions}
-        />
+        <div className="no-print">
+          <TeacherAsk
+            slug={poem.slug}
+            audience={audienceSlug}
+            versionIds={videoIds}
+            questions={questions}
+          />
+        </div>
 
-        <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
+        <footer className="hairline no-print" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
           <p className="chrome">
             qed&rsquo;bop &middot; teacher edition
           </p>
@@ -215,6 +222,7 @@ function TeacherHeader({
 }) {
   return (
     <header
+      className="no-print"
       style={{
         marginBottom: '2rem',
         paddingBottom: '1.5rem',
@@ -334,12 +342,14 @@ async function TeacherSections({
         >
           {edition.poetBio}
         </p>
-        <PrepPodcastButton
-          slug={slug}
-          audience={audience}
-          versionIds={versionIds}
-          questions={questions}
-        />
+        <div className="no-print">
+          <PrepPodcastButton
+            slug={slug}
+            audience={audience}
+            versionIds={versionIds}
+            questions={questions}
+          />
+        </div>
       </TeacherSection>
 
       <TeacherSection label="Historical context">
