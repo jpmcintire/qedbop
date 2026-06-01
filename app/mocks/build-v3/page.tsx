@@ -30,6 +30,7 @@ import { POEMS } from '@/lib/poems';
 import { TopNav } from '@/app/_components/TopNav';
 import { Modal } from '@/app/_components/Modal';
 import { QrPanel } from '@/app/_components/QrPanel';
+import { StudentPreviewEditor } from '@/app/_components/StudentPreviewEditor';
 
 type Screen = 'pick-text' | 'pick-setting' | 'lesson';
 
@@ -190,9 +191,9 @@ function PickText({ onChoose }: { onChoose: (slug: string) => void }) {
       >
         <span className="chrome">Sort:</span>
         {(['title', 'poet', 'year'] as const).map((k) => (
-          <Chip key={k} active={sort === k} onClick={() => setSort(k)} small>
+          <Pill key={k} active={sort === k} onClick={() => setSort(k)}>
             {k === 'title' ? 'A–Z' : k === 'poet' ? 'Poet' : 'Year'}
-          </Chip>
+          </Pill>
         ))}
         <span className="chrome" style={{ marginLeft: 'auto' }}>
           {filtered.length} poem{filtered.length === 1 ? '' : 's'}
@@ -417,6 +418,7 @@ function Lesson({
         audience={audience}
         length={length}
         questions={questions}
+        setQuestions={setQuestions}
       />
       <Adjust
         audience={audience}
@@ -456,12 +458,14 @@ function UrlBlock({
   audience,
   length,
   questions,
+  setQuestions,
 }: {
   poem: (typeof POEMS)[number];
   setting: (typeof POEMS)[number]['versions'][number];
   audience: string;
   length: string;
   questions: string[];
+  setQuestions: (qs: string[]) => void;
 }) {
   // Build real student/teacher/editable URLs from the mock state so
   // Preview iframes and QR codes resolve to actual rendered pages
@@ -497,7 +501,15 @@ function UrlBlock({
         hint="Send to students. Read-only — they see the poem, settings, and questions."
         url={studentUrl}
         primary
-        showPreview
+        previewKind="student"
+        previewState={{
+          poem,
+          versions: [setting],
+          audienceLabel: AUDIENCE_LABEL[audience] ?? audience,
+          lengthLabels: [LENGTH_LABEL[length] ?? length],
+          questions,
+          onSaveQuestions: setQuestions,
+        }}
         showQr
         qrCaption={qrCaption}
       />
@@ -505,7 +517,7 @@ function UrlBlock({
         label="Teacher edition"
         hint="For you. Poet bio, historical context, class agenda, per-question commentary."
         url={teacherUrl}
-        showPreview
+        previewKind="iframe"
       />
       <UrlRow
         label="Editable"
@@ -516,12 +528,22 @@ function UrlBlock({
   );
 }
 
+type PreviewState = {
+  poem: (typeof POEMS)[number];
+  versions: (typeof POEMS)[number]['versions'];
+  audienceLabel: string;
+  lengthLabels: string[];
+  questions: string[];
+  onSaveQuestions: (qs: string[]) => void;
+};
+
 function UrlRow({
   label,
   hint,
   url,
   primary,
-  showPreview,
+  previewKind,
+  previewState,
   showQr,
   qrCaption,
 }: {
@@ -529,7 +551,11 @@ function UrlRow({
   hint: string;
   url: string;
   primary?: boolean;
-  showPreview?: boolean;
+  // 'student' renders the editable preview component; 'iframe' iframes
+  // the real URL (used for teacher edition where content is AI-generated
+  // and not user-editable).
+  previewKind?: 'student' | 'iframe';
+  previewState?: PreviewState;
   showQr?: boolean;
   qrCaption?: string;
 }) {
@@ -571,8 +597,10 @@ function UrlRow({
           <RowButton onClick={doCopy} primary={primary}>
             {copied ? 'Copied' : 'Copy'}
           </RowButton>
-          {showPreview && (
-            <RowButton onClick={() => setModal('preview')}>Preview</RowButton>
+          {previewKind && (
+            <RowButton onClick={() => setModal('preview')}>
+              {previewKind === 'student' ? 'Preview / edit' : 'Preview'}
+            </RowButton>
           )}
           {showQr && (
             <RowButton onClick={() => setModal('qr')}>QR</RowButton>
@@ -584,15 +612,34 @@ function UrlRow({
       <Modal
         open={modal === 'preview'}
         onClose={() => setModal(null)}
-        title={`Preview — ${label}`}
-        subtitle="What this URL renders for whoever opens it."
-        maxWidth="960px"
+        title={previewKind === 'student' ? 'Preview / edit — student view' : `Preview — ${label}`}
+        subtitle={
+          previewKind === 'student'
+            ? 'Click any question to edit it. Save updates the shareable URL.'
+            : 'What this URL renders for whoever opens it.'
+        }
+        maxWidth={previewKind === 'student' ? '720px' : '960px'}
       >
-        <iframe
-          src={url}
-          title={`Preview of ${label}`}
-          style={{ width: '100%', height: '70vh', border: 0, display: 'block' }}
-        />
+        {previewKind === 'student' && previewState ? (
+          <StudentPreviewEditor
+            poem={previewState.poem}
+            versions={previewState.versions}
+            audienceLabel={previewState.audienceLabel}
+            lengthLabels={previewState.lengthLabels}
+            questions={previewState.questions}
+            onClose={() => setModal(null)}
+            onSave={(qs) => {
+              previewState.onSaveQuestions(qs);
+              setModal(null);
+            }}
+          />
+        ) : (
+          <iframe
+            src={url}
+            title={`Preview of ${label}`}
+            style={{ width: '100%', height: '70vh', border: 0, display: 'block' }}
+          />
+        )}
       </Modal>
 
       <Modal
@@ -687,116 +734,96 @@ function Adjust(props: {
         <AdjustRow
           label="Audience"
           intro="Calibrates the vocabulary, theoretical depth, and length of the AI-generated questions and teacher edition."
-          value={AUDIENCE_LABEL[props.audience]}
-          editor={
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {Object.entries(AUDIENCE_LABEL).map(([k, v]) => (
-                <Chip key={k} active={props.audience === k} onClick={() => props.setAudience(k)}>
-                  {v}
-                </Chip>
-              ))}
-            </div>
-          }
-        />
+        >
+          <PillRow>
+            {Object.entries(AUDIENCE_LABEL).map(([k, v]) => (
+              <Pill key={k} active={props.audience === k} onClick={() => props.setAudience(k)}>
+                {v}
+              </Pill>
+            ))}
+          </PillRow>
+        </AdjustRow>
         <AdjustRow
           label="Shape"
-          intro="Whether students answer the questions during class together or write longer responses at home. Defaults shift to match."
-          value={props.shape === 'at-home' ? 'With at-home component' : 'In class only'}
-          editor={
-            <div style={{ display: 'grid', gap: '0.5rem', gridTemplateColumns: '1fr 1fr' }}>
-              <ShapeMini
-                active={props.shape === 'in-class'}
-                onClick={() => props.setShape('in-class')}
-                title="In class only"
-                hint="Shorter prompts. Faster to run."
-              />
-              <ShapeMini
-                active={props.shape === 'at-home'}
-                onClick={() => props.setShape('at-home')}
-                title="With at-home component"
-                hint="Longer written responses."
-              />
-            </div>
-          }
-        />
+          intro="Whether students answer the questions during class together or write longer responses at home."
+        >
+          <PillRow>
+            <Pill active={props.shape === 'in-class'} onClick={() => props.setShape('in-class')}>
+              In class only
+            </Pill>
+            <Pill active={props.shape === 'at-home'} onClick={() => props.setShape('at-home')}>
+              With at-home component
+            </Pill>
+          </PillRow>
+        </AdjustRow>
         <AdjustRow
           label="Length"
           intro="How long each student response is expected to be. Shown to students above the questions so they know what's expected."
-          value={LENGTH_LABEL[props.length] ?? props.length}
-          editor={
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {Object.entries(LENGTH_LABEL).map(([k, v]) => (
-                <Chip key={k} active={props.length === k} onClick={() => props.setLength(k)}>
-                  {v}
-                </Chip>
-              ))}
-            </div>
-          }
-        />
+        >
+          <PillRow>
+            {Object.entries(LENGTH_LABEL).map(([k, v]) => (
+              <Pill key={k} active={props.length === k} onClick={() => props.setLength(k)}>
+                {v}
+              </Pill>
+            ))}
+          </PillRow>
+        </AdjustRow>
         <AdjustRow
           label={`Questions (${props.questions.length})`}
           intro="The discussion prompts students see. AI-generated for the chosen text + setting + audience; edit any of them, or write your own."
-          value={
-            props.questions[0]
-              ? `“${truncate(props.questions[0], 60)}”`
-              : 'No questions yet'
-          }
-          editor={
-            <div>
-              <ol style={{ paddingLeft: '1.25rem', margin: 0, display: 'grid', gap: '0.5rem' }}>
-                {props.questions.map((q, i) => (
-                  <li key={i}>
-                    <textarea
-                      value={q}
-                      onChange={(e) => {
-                        const next = [...props.questions];
-                        next[i] = e.target.value;
-                        props.setQuestions(next);
-                      }}
-                      style={{
-                        width: '100%',
-                        minHeight: '3em',
-                        padding: '0.375rem 0.5rem',
-                        border: '1px solid var(--rule)',
-                        borderRadius: '0.25rem',
-                        fontFamily: 'inherit',
-                        fontSize: '0.875rem',
-                        resize: 'vertical',
-                        background: 'var(--paper)',
-                        color: 'var(--ink)',
-                      }}
-                    />
-                  </li>
-                ))}
-              </ol>
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  className="btn"
-                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}
-                >
-                  + Add custom question
-                </button>
-                <button
-                  type="button"
+          last
+        >
+          <ol style={{ paddingLeft: '1.25rem', margin: 0, display: 'grid', gap: '0.5rem' }}>
+            {props.questions.map((q, i) => (
+              <li key={i}>
+                <textarea
+                  value={q}
+                  onChange={(e) => {
+                    const next = [...props.questions];
+                    next[i] = e.target.value;
+                    props.setQuestions(next);
+                  }}
                   style={{
-                    fontSize: '0.75rem',
-                    padding: '0.25rem 0.625rem',
-                    background: 'transparent',
+                    width: '100%',
+                    minHeight: '3em',
+                    padding: '0.375rem 0.5rem',
                     border: '1px solid var(--rule)',
                     borderRadius: '0.25rem',
-                    cursor: 'pointer',
-                    color: 'var(--muted)',
                     fontFamily: 'inherit',
+                    fontSize: '0.875rem',
+                    resize: 'vertical',
+                    background: 'var(--paper)',
+                    color: 'var(--ink)',
                   }}
-                >
-                  Regenerate all
-                </button>
-              </div>
-            </div>
-          }
-          last
-        />
+                />
+              </li>
+            ))}
+          </ol>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              className="btn"
+              style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}
+            >
+              + Add custom question
+            </button>
+            <button
+              type="button"
+              style={{
+                fontSize: '0.75rem',
+                padding: '0.25rem 0.625rem',
+                background: 'transparent',
+                border: '1px solid var(--rule)',
+                borderRadius: '0.25rem',
+                cursor: 'pointer',
+                color: 'var(--muted)',
+                fontFamily: 'inherit',
+              }}
+            >
+              Regenerate all
+            </button>
+          </div>
+        </AdjustRow>
       </div>
     </section>
   );
@@ -805,66 +832,69 @@ function Adjust(props: {
 function AdjustRow({
   label,
   intro,
-  value,
-  editor,
+  children,
   last,
 }: {
   label: string;
   intro: string;
-  value: string;
-  editor: React.ReactNode;
+  children: React.ReactNode;
   last?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
   return (
-    <div style={{ borderBottom: last ? 'none' : '1px solid var(--rule)' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          padding: '0.875rem 1rem',
-          gap: '1rem',
-        }}
-      >
-        <div style={{ minWidth: '8rem', flexShrink: 0 }}>
-          <div className="chrome" style={{ fontWeight: 500, marginBottom: '0.125rem' }}>
-            {label}
-          </div>
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--muted)', marginBottom: '0.25rem' }}>
-            {intro}
-          </div>
-          <div style={{ fontSize: '0.9375rem' }}>{value}</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--muted)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: '0.8125rem',
-            textDecoration: 'underline',
-            flexShrink: 0,
-            paddingTop: '0.125rem',
-          }}
-        >
-          {open ? 'done' : 'change'}
-        </button>
+    <div
+      style={{
+        borderBottom: last ? 'none' : '1px solid var(--rule)',
+        padding: '0.875rem 1rem',
+        display: 'grid',
+        gridTemplateColumns: '8rem 1fr',
+        gap: '1rem',
+        alignItems: 'flex-start',
+      }}
+    >
+      <div className="chrome" style={{ fontWeight: 500 }}>
+        {label}
       </div>
-      {open && (
-        <div
-          style={{
-            padding: '0 1rem 1rem 1rem',
-          }}
-        >
-          {editor}
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: '0.8125rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
+          {intro}
         </div>
-      )}
+        {children}
+      </div>
     </div>
+  );
+}
+
+function PillRow({ children }: { children: React.ReactNode }) {
+  return <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>{children}</div>;
+}
+
+function Pill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: '0.375rem 0.875rem',
+        border: `1px solid ${active ? 'var(--ink)' : 'var(--rule)'}`,
+        background: active ? 'var(--ink)' : 'var(--paper)',
+        color: active ? 'var(--paper)' : 'var(--ink)',
+        borderRadius: '999px',
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        fontSize: '0.875rem',
+        lineHeight: 1.2,
+      }}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -942,78 +972,6 @@ function Crumb({
   );
 }
 
-function Chip({
-  children,
-  active,
-  onClick,
-  small,
-}: {
-  children: React.ReactNode;
-  active?: boolean;
-  onClick?: () => void;
-  small?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        padding: small ? '0.125rem 0.5rem' : '0.375rem 0.75rem',
-        border: `1px solid ${active ? 'var(--ink)' : 'var(--rule)'}`,
-        background: active ? 'var(--ink)' : 'var(--paper)',
-        color: active ? 'var(--paper)' : 'var(--ink)',
-        borderRadius: '999px',
-        cursor: 'pointer',
-        fontFamily: 'inherit',
-        fontSize: small ? '0.75rem' : '0.875rem',
-        lineHeight: 1.2,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function ShapeMini({
-  active,
-  onClick,
-  title,
-  hint,
-}: {
-  active: boolean;
-  onClick: () => void;
-  title: string;
-  hint: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        textAlign: 'left',
-        padding: '0.625rem 0.875rem',
-        border: `2px solid ${active ? 'var(--ink)' : 'var(--rule)'}`,
-        borderRadius: '0.375rem',
-        background: active ? 'rgba(0,0,0,0.03)' : 'var(--paper)',
-        cursor: 'pointer',
-        fontFamily: 'inherit',
-      }}
-    >
-      <div
-        style={{
-          fontFamily: 'Georgia, "Source Serif Pro", serif',
-          fontSize: '0.9375rem',
-          fontWeight: 600,
-          marginBottom: '0.125rem',
-        }}
-      >
-        {title}
-      </div>
-      <div style={{ color: 'var(--muted)', fontSize: '0.8125rem' }}>{hint}</div>
-    </button>
-  );
-}
-
 // =====================================================================
 // Helpers
 // =====================================================================
@@ -1038,6 +996,3 @@ function lastName(name: string): string {
   return parts.length > 1 ? parts[parts.length - 1] : name;
 }
 
-function truncate(s: string, n: number): string {
-  return s.length <= n ? s : s.slice(0, n - 1) + '…';
-}
