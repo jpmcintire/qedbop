@@ -11,6 +11,7 @@ import {
 import { TeacherAsk } from './TeacherAsk';
 import { PrepPodcastButton } from './PrepPodcastButton';
 import { ProControls } from './ProControls';
+import { ShowToClassButton } from './ShowToClassButton';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -90,7 +91,11 @@ export default async function TeacherPage({ params, searchParams }: Props) {
   return (
     <main className="page">
       <TopNav />
-      <TeacherHeader studentUrl={studentUrl} isPro={isPro} />
+      <TeacherHeader
+        studentUrl={studentUrl}
+        isPro={isPro}
+        qrCaption={`${poem.title}${audience ? ` — ${audience}` : ''}`}
+      />
       <ProControls
         isPro={isPro}
         agendaMinutes={agendaMinutes}
@@ -202,9 +207,11 @@ export default async function TeacherPage({ params, searchParams }: Props) {
 function TeacherHeader({
   studentUrl,
   isPro,
+  qrCaption,
 }: {
   studentUrl: string;
   isPro: boolean;
+  qrCaption: string;
 }) {
   return (
     <header
@@ -217,23 +224,27 @@ function TeacherHeader({
       <div
         style={{
           display: 'flex',
-          alignItems: 'baseline',
+          alignItems: 'center',
           justifyContent: 'space-between',
           gap: '1rem',
+          flexWrap: 'wrap',
         }}
       >
         <p className="chrome" style={{ margin: 0 }}>
           Teacher edition {isPro ? '— Pro' : '— Basic'}
         </p>
-        <a
-          href={studentUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="btn btn-ghost"
-          style={{ fontSize: '0.75rem', padding: '0.375rem 0.875rem', textDecoration: 'none' }}
-        >
-          Open student view ↗
-        </a>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <ShowToClassButton studentUrl={studentUrl} caption={qrCaption} />
+          <a
+            href={studentUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="btn btn-ghost"
+            style={{ fontSize: '0.75rem', padding: '0.375rem 0.875rem', textDecoration: 'none' }}
+          >
+            Open student view ↗
+          </a>
+        </div>
       </div>
     </header>
   );
