@@ -15,11 +15,16 @@ import type { Identity } from './identity-client';
 // piling up duplicates. Adding a video or switching poems creates
 // a separate entry.
 
+// 'basic' | 'custom' are the classic /build modes. 'v3' is the new
+// /build/new builder. Knowing which builder produced a lesson lets
+// editableUrl() route back to the right one.
+export type LessonMode = 'basic' | 'custom' | 'v3';
+
 export type SavedLesson = {
   id: string;
   poemSlug: string;
   audience: string;
-  mode: 'basic' | 'custom';
+  mode: LessonMode;
   videoIds: string[];
   lengths: string[];
   questions: string[];
@@ -221,12 +226,16 @@ export function teacherUrl(l: SavedLesson): string {
 
 export function editableUrl(l: SavedLesson): string {
   const params = new URLSearchParams();
-  params.set('mode', l.mode);
   params.set('slug', l.poemSlug);
   params.set('audience', l.audience);
   for (const v of l.videoIds) params.append('v', v);
   for (const len of l.lengths) params.append('len', len);
   for (const q of l.questions) params.append('q', q);
+  // v3 lessons route back to /build/new; basic/custom go to /build.
+  if (l.mode === 'v3') {
+    return `/build/new?${params.toString()}`;
+  }
+  params.set('mode', l.mode);
   return `/build?${params.toString()}`;
 }
 
