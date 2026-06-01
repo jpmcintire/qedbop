@@ -229,7 +229,7 @@ function Builder() {
 
   return (
     <main className="page" style={{ maxWidth: '52rem' }}>
-      <TopNav current="build" />
+      <TopNav current="build-new" />
 
       <header style={{ marginBottom: '1.5rem' }}>
         <p className="chrome">/build/new · new builder (side-by-side with classic /build)</p>
