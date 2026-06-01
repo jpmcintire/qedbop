@@ -313,51 +313,54 @@ function PickSetting({
                 {[v.artist, v.genre, v.vocalCharacter].filter(Boolean).join(' · ') || '—'}
               </p>
             </header>
-            <div
-              style={{
-                position: 'relative',
-                paddingBottom: '56.25%',
-                height: 0,
-                overflow: 'hidden',
-                borderRadius: '0.375rem',
-                marginBottom: '0.75rem',
-              }}
-            >
-              <iframe
-                src={`https://www.youtube.com/embed/${v.youtubeId}`}
-                title={`${poem.title} — ${v.label}`}
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  border: 0,
-                }}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-            {v.themes && (
-              <p
-                style={{
-                  color: 'var(--muted)',
-                  fontSize: '0.875rem',
-                  margin: '0 0 0.75rem 0',
-                  whiteSpace: 'pre-wrap',
+                  flexShrink: 0,
+                  width: '192px',
+                  height: '108px',
+                  borderRadius: '0.375rem',
+                  overflow: 'hidden',
+                  background: '#000',
                 }}
               >
-                {v.themes}
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={() => onChoose(v.youtubeId)}
-              className="btn"
-              style={{ fontSize: '0.875rem' }}
-            >
-              Use this setting →
-            </button>
+                <iframe
+                  src={`https://www.youtube.com/embed/${v.youtubeId}`}
+                  title={`${poem.title} — ${v.label}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    border: 0,
+                    display: 'block',
+                  }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: '14rem' }}>
+                {v.themes && (
+                  <p
+                    style={{
+                      color: 'var(--muted)',
+                      fontSize: '0.875rem',
+                      margin: '0 0 0.75rem 0',
+                      whiteSpace: 'pre-wrap',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {v.themes}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onChoose(v.youtubeId)}
+                  className="btn"
+                  style={{ fontSize: '0.875rem' }}
+                >
+                  Use this setting →
+                </button>
+              </div>
+            </div>
           </article>
         ))}
       </div>
