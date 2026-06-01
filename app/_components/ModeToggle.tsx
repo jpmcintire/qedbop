@@ -10,7 +10,7 @@ const COPY: Record<Mode, string> = {
   basic:
     'Pick a poem and the versions. One click for a student URL plus a teacher edition — calibrated for middle school students, with three AI-generated discussion questions.',
   custom:
-    'Full control: pick audience, choose topics, response lengths, count, edit questions, set custom expiration. Outputs share, teacher, and editable URLs.',
+    'Full control: pick audience, choose topics, response lengths, count, edit questions. Outputs share, teacher, and editable URLs.',
 };
 
 export function ModeToggle({ mode, setMode }: Props) {

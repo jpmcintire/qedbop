@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPoem, audienceLabel, lengthLabel } from '@/lib/poems';
 import { getPoemEnriched } from '@/lib/poems-runtime';
-import { isExpired, formatExpirationFriendly } from '@/lib/expiration';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -10,7 +9,6 @@ type Props = {
     v?: string | string[];
     audience?: string;
     q?: string | string[];
-    exp?: string;
     len?: string | string[];
   }>;
 };
@@ -32,57 +30,6 @@ export default async function ViewerPage({ params, searchParams }: Props) {
 
   const poem = await getPoemEnriched(slug);
   if (!poem) notFound();
-
-  // Expiration is checked before anything else — if the link has expired,
-  // show the expired page instead of the assignment. Missing exp param
-  // counts as "no expiration" (back-compat with older URLs).
-  if (isExpired(search.exp)) {
-    return (
-      <main className="page">
-        <header style={{ marginBottom: '2.5rem' }}>
-          <Link
-            href="/"
-            className="wordmark"
-            style={{ color: 'var(--ink)', fontSize: '1.25rem', textDecoration: 'none' }}
-          >
-            qed&rsquo;bop
-          </Link>
-        </header>
-        <article style={{ maxWidth: '38rem' }}>
-          <p className="chrome" style={{ marginBottom: '0.5rem' }}>Expired</p>
-          <h1
-            style={{
-              fontFamily: 'Georgia, "Source Serif Pro", serif',
-              fontSize: '2.5rem',
-              fontWeight: 600,
-              lineHeight: 1.15,
-              margin: 0,
-            }}
-          >
-            This assignment has expired.
-          </h1>
-          <p
-            style={{
-              fontFamily: 'Georgia, "Source Serif Pro", serif',
-              fontSize: '1.0625rem',
-              lineHeight: 1.7,
-              marginTop: '1.5rem',
-              color: 'var(--muted)',
-            }}
-          >
-            The teacher who created this link set it to expire on{' '}
-            {formatExpirationFriendly(search.exp)}. Ask them for an updated link
-            if you still need to do the assignment.
-          </p>
-          <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
-            <p className="chrome">
-              <Link href="/" style={{ color: 'inherit' }}>qed&rsquo;bop</Link> &middot; public-domain poems set to music
-            </p>
-          </footer>
-        </article>
-      </main>
-    );
-  }
 
   const videoIds = Array.isArray(search.v) ? search.v : search.v ? [search.v] : [];
   const versions = videoIds
@@ -107,8 +54,6 @@ export default async function ViewerPage({ params, searchParams }: Props) {
   const lengthLabels = lengthValues
     .map((v) => lengthLabel(search.audience ?? 'high-school', v))
     .filter((x): x is string => !!x);
-
-  const expiresOn = formatExpirationFriendly(search.exp);
 
   return (
     <main className="page">
@@ -230,7 +175,6 @@ export default async function ViewerPage({ params, searchParams }: Props) {
           <p className="chrome">
             Built with qed&rsquo;bop &middot;{' '}
             <Link href="/build" style={{ color: 'inherit' }}>make your own</Link>
-            {expiresOn ? ` · expires ${expiresOn}` : ''}
           </p>
         </footer>
       </article>

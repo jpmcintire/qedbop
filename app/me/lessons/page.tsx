@@ -5,7 +5,6 @@ import { TopNav } from '@/app/_components/TopNav';
 import { IDENTITIES, useIdentity } from '@/lib/identity-client';
 import {
   editableUrl,
-  isLive,
   removeLesson,
   studentUrl,
   teacherUrl,
@@ -13,11 +12,10 @@ import {
   type SavedLesson,
 } from '@/lib/lessons-store';
 import { POEMS, audienceLabel } from '@/lib/poems';
-import { formatExpirationFriendly } from '@/lib/expiration';
 
 // Signed-in-only history page. Renders the saved-lesson list for the
-// active identity, with Live/Expired badges and the three URL flavors
-// (student / teacher edition / editable) per entry.
+// active identity, with the three URL flavors (student / teacher
+// edition / editable) per entry.
 
 export default function MyLessonsPage() {
   const identity = useIdentity();
@@ -99,8 +97,6 @@ function EmptyState() {
 
 function LessonRow({ lesson, identity }: { lesson: SavedLesson; identity: 'john' | 'dante' }) {
   const poem = POEMS.find((p) => p.slug === lesson.poemSlug);
-  const live = isLive(lesson);
-  const expFriendly = lesson.exp ? formatExpirationFriendly(lesson.exp) : 'no expiration';
 
   return (
     <article
@@ -140,11 +136,10 @@ function LessonRow({ lesson, identity }: { lesson: SavedLesson; identity: 'john'
             {lesson.questions.length} question{lesson.questions.length === 1 ? '' : 's'}
           </p>
         </div>
-        <StatusBadge live={live} />
       </header>
 
       <p className="chrome" style={{ margin: '0 0 0.75rem 0' }}>
-        {live ? 'Expires' : 'Expired on'} {expFriendly} · saved {formatRelative(lesson.updatedAt)}
+        Saved {formatRelative(lesson.updatedAt)}
       </p>
 
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -189,27 +184,6 @@ function LessonRow({ lesson, identity }: { lesson: SavedLesson; identity: 'john'
         </button>
       </div>
     </article>
-  );
-}
-
-function StatusBadge({ live }: { live: boolean }) {
-  return (
-    <span
-      style={{
-        fontSize: '0.75rem',
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.04em',
-        padding: '0.25rem 0.625rem',
-        borderRadius: '999px',
-        background: live ? 'rgba(60, 140, 70, 0.12)' : 'rgba(160, 80, 80, 0.10)',
-        color: live ? '#2d6a35' : '#9a4a4a',
-        alignSelf: 'center',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {live ? 'Live' : 'Expired'}
-    </span>
   );
 }
 

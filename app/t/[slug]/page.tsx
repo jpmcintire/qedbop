@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { audienceLabel, lengthLabel } from '@/lib/poems';
 import { getPoemEnriched } from '@/lib/poems-runtime';
-import { isExpired, formatExpirationFriendly } from '@/lib/expiration';
 import { TopNav } from '../../_components/TopNav';
 import {
   generateTeacherEdition,
@@ -19,7 +18,6 @@ type Props = {
     v?: string | string[];
     audience?: string;
     q?: string | string[];
-    exp?: string;
     len?: string | string[];
     tmode?: string;
     agendamin?: string;
@@ -46,11 +44,6 @@ export default async function TeacherPage({ params, searchParams }: Props) {
   const poem = await getPoemEnriched(slug);
   if (!poem) notFound();
 
-  // Same expiration semantics as the student page.
-  if (isExpired(search.exp)) {
-    return <ExpiredCard expIso={search.exp} />;
-  }
-
   const videoIds = Array.isArray(search.v) ? search.v : search.v ? [search.v] : [];
   const versions = videoIds
     .map((id) => poem.versions.find((ver) => ver.youtubeId === id))
@@ -71,14 +64,12 @@ export default async function TeacherPage({ params, searchParams }: Props) {
     .map((v) => lengthLabel(search.audience ?? 'high-school', v))
     .filter((x): x is string => !!x);
 
-  const expiresOn = formatExpirationFriendly(search.exp);
   const studentUrl = `/a/${poem.slug}?${new URLSearchParams(
     [
       ...videoIds.map((id) => ['v', id] as [string, string]),
       ...(search.audience ? [['audience', search.audience] as [string, string]] : []),
       ...lengthValues.map((l) => ['len', l] as [string, string]),
       ...rawQuestions.map((q) => ['q', q] as [string, string]),
-      ...(search.exp ? [['exp', search.exp] as [string, string]] : []),
     ].map(([k, v]) => [k, v]),
   ).toString()}`;
 
@@ -99,7 +90,7 @@ export default async function TeacherPage({ params, searchParams }: Props) {
   return (
     <main className="page">
       <TopNav />
-      <TeacherHeader studentUrl={studentUrl} expiresOn={expiresOn} isPro={isPro} />
+      <TeacherHeader studentUrl={studentUrl} isPro={isPro} />
       <ProControls
         isPro={isPro}
         agendaMinutes={agendaMinutes}
@@ -201,7 +192,6 @@ export default async function TeacherPage({ params, searchParams }: Props) {
         <footer className="hairline" style={{ marginTop: '3rem', paddingTop: '1.5rem' }}>
           <p className="chrome">
             qed&rsquo;bop &middot; teacher edition
-            {expiresOn ? ` · expires ${expiresOn}` : ''}
           </p>
         </footer>
       </article>
@@ -211,11 +201,9 @@ export default async function TeacherPage({ params, searchParams }: Props) {
 
 function TeacherHeader({
   studentUrl,
-  expiresOn,
   isPro,
 }: {
   studentUrl: string;
-  expiresOn: string | null;
   isPro: boolean;
 }) {
   return (
@@ -525,36 +513,3 @@ function QuestionCommentaryLoading({
   );
 }
 
-function ExpiredCard({ expIso }: { expIso: string | undefined }) {
-  return (
-    <main className="page">
-      <TopNav />
-      <article style={{ maxWidth: '38rem' }}>
-        <p className="chrome" style={{ marginBottom: '0.5rem' }}>Expired</p>
-        <h1
-          style={{
-            fontFamily: 'Georgia, "Source Serif Pro", serif',
-            fontSize: '2.5rem',
-            fontWeight: 600,
-            lineHeight: 1.15,
-            margin: 0,
-          }}
-        >
-          This teacher edition has expired.
-        </h1>
-        <p
-          style={{
-            fontFamily: 'Georgia, "Source Serif Pro", serif',
-            fontSize: '1.0625rem',
-            lineHeight: 1.7,
-            marginTop: '1.5rem',
-            color: 'var(--muted)',
-          }}
-        >
-          It was set to expire on {formatExpirationFriendly(expIso)}. Rebuild it from the home page
-          to refresh.
-        </p>
-      </article>
-    </main>
-  );
-}

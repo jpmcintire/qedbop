@@ -166,13 +166,13 @@ export default function BuildMock() {
                 active={shape === 'in-class'}
                 onClick={() => setShape('in-class')}
                 title="In class only"
-                hint="Short prompts. 2–3 questions. No expiration pressure."
+                hint="Short prompts. 2–3 questions."
               />
               <ShapeCard
                 active={shape === 'at-home'}
                 onClick={() => setShape('at-home')}
                 title="With at-home component"
-                hint="Longer written responses. 4–5 questions. Expires in 14 days."
+                hint="Longer written responses. 4–5 questions."
               />
             </div>
             <Continue disabled={!shape} onClick={() => setCurrent(5)} />
@@ -186,9 +186,9 @@ export default function BuildMock() {
           <ActiveCard n={5} title="Questions">
             <p className="chrome" style={{ margin: '0 0 0.5rem 0' }}>
               {shape === 'at-home'
-                ? 'Defaults applied: 4 questions, short-essay length, expires in 14 days.'
+                ? 'Defaults applied: 4 questions, short-essay length.'
                 : shape === 'in-class'
-                  ? 'Defaults applied: 3 questions, short-paragraph, no expiration.'
+                  ? 'Defaults applied: 3 questions, short-paragraph.'
                   : 'Defaults: 4 questions, paragraph length.'}
             </p>
             <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0 1rem 0', lineHeight: 1.55 }}>
@@ -207,7 +207,7 @@ export default function BuildMock() {
               <summary
                 style={{ cursor: 'pointer', color: 'var(--muted)', fontSize: '0.875rem' }}
               >
-                Tune (topics, length, count, expiration)
+                Tune (topics, length, count)
               </summary>
               <div
                 style={{
