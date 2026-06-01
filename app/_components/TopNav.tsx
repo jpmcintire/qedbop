@@ -16,11 +16,12 @@ import { SignInMenu } from './SignInMenu';
 // SignInMenu uses `alignSelf: 'center'` so its button chip stays
 // vertically centered to the row instead of sitting on the baseline.
 
-export type NavKey = 'home' | 'library' | 'build' | 'lessons' | 'none';
+export type NavKey = 'home' | 'library' | 'build' | 'build-new' | 'lessons' | 'none';
 
 const STATIC_ITEMS: Array<{ key: NavKey; label: string; href: string }> = [
   { key: 'library', label: 'Library', href: '/library' },
   { key: 'build', label: 'Build a lesson', href: '/build' },
+  { key: 'build-new', label: 'Build · new', href: '/build/new' },
 ];
 
 export function TopNav({ current = 'none' }: { current?: NavKey }) {
