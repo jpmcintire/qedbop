@@ -17,11 +17,12 @@
 //   - Library browse + text search inside the picker
 //   - Pick-a-setting is a discrete second screen so the listening
 //     decision gets its own attention
-//   - Conservative defaults (HS, in-class, 3 paragraph questions, 14d
-//     expiration) produce an immediately-usable lesson the moment a
-//     setting is chosen
+//   - Conservative defaults (HS, in-class, 3 paragraph questions)
+//     produce an immediately-usable lesson the moment a setting is
+//     chosen
 //   - Adjust panel makes every default editable inline without
-//     navigating
+//     navigating; each row has a short context intro explaining what
+//     it is so labels alone don't carry the meaning
 //   - "Add another setting / poem" lives at the bottom, deemphasized
 
 import { useMemo, useState } from 'react';
@@ -34,7 +35,6 @@ const DEFAULTS = {
   audience: 'high-school',
   shape: 'in-class' as 'in-class' | 'at-home',
   length: 'paragraph',
-  expirationDays: 14,
 } as const;
 
 const SAMPLE_QUESTIONS = [
@@ -50,7 +50,6 @@ export default function BuildMockV3() {
   const [audience, setAudience] = useState<string>(DEFAULTS.audience);
   const [shape, setShape] = useState<'in-class' | 'at-home'>(DEFAULTS.shape);
   const [length, setLength] = useState<string>(DEFAULTS.length);
-  const [expirationDays, setExpirationDays] = useState<number>(DEFAULTS.expirationDays);
   const [questions, setQuestions] = useState<string[]>(SAMPLE_QUESTIONS);
 
   const poem = textSlug ? POEMS.find((p) => p.slug === textSlug) : null;
@@ -113,8 +112,6 @@ export default function BuildMockV3() {
           setShape={setShape}
           length={length}
           setLength={setLength}
-          expirationDays={expirationDays}
-          setExpirationDays={setExpirationDays}
           questions={questions}
           setQuestions={setQuestions}
           onChangeText={startOver}
@@ -381,8 +378,6 @@ function Lesson({
   setShape,
   length,
   setLength,
-  expirationDays,
-  setExpirationDays,
   questions,
   setQuestions,
   onChangeText,
@@ -396,8 +391,6 @@ function Lesson({
   setShape: (s: 'in-class' | 'at-home') => void;
   length: string;
   setLength: (s: string) => void;
-  expirationDays: number;
-  setExpirationDays: (n: number) => void;
   questions: string[];
   setQuestions: (q: string[]) => void;
   onChangeText: () => void;
@@ -412,8 +405,8 @@ function Lesson({
         ]}
       />
 
-      <LessonHeader expirationDays={expirationDays} />
-      <UrlBlock poem={poem} />
+      <LessonHeader />
+      <UrlBlock />
       <Adjust
         audience={audience}
         setAudience={setAudience}
@@ -421,8 +414,6 @@ function Lesson({
         setShape={setShape}
         length={length}
         setLength={setLength}
-        expirationDays={expirationDays}
-        setExpirationDays={setExpirationDays}
         questions={questions}
         setQuestions={setQuestions}
       />
@@ -431,16 +422,9 @@ function Lesson({
   );
 }
 
-function LessonHeader({ expirationDays }: { expirationDays: number }) {
+function LessonHeader() {
   return (
-    <header
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'baseline',
-        margin: '1rem 0 0.5rem 0',
-      }}
-    >
+    <header style={{ margin: '1rem 0 0.5rem 0' }}>
       <h2
         style={{
           fontFamily: 'Georgia, "Source Serif Pro", serif',
@@ -451,82 +435,97 @@ function LessonHeader({ expirationDays }: { expirationDays: number }) {
       >
         Your lesson
       </h2>
-      <span
-        style={{
-          fontSize: '0.75rem',
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-          padding: '0.25rem 0.625rem',
-          borderRadius: '999px',
-          background: 'rgba(60, 140, 70, 0.12)',
-          color: '#2d6a35',
-        }}
-      >
-        Live · {expirationDays}d
-      </span>
     </header>
   );
 }
 
-function UrlBlock({ poem }: { poem: (typeof POEMS)[number] }) {
+function UrlBlock() {
   return (
     <div
       style={{
         border: '1px solid var(--rule)',
         borderRadius: '0.5rem',
-        padding: '0.75rem 1rem',
+        padding: '0.875rem 1rem',
         marginBottom: '1.5rem',
         display: 'grid',
-        gap: '0.5rem',
+        gap: '0.625rem',
         background: 'rgba(0,0,0,0.02)',
       }}
     >
-      <UrlRow label="Student link" url={`qedbop.com/a/${poem.slug}?...`} primary />
-      <UrlRow label="Teacher edition" url={`qedbop.com/t/${poem.slug}?...`} />
-      <UrlRow label="Editable" url={`qedbop.com/build?slug=${poem.slug}&...`} />
+      <UrlRow
+        label="Student link"
+        hint="Send to students. Read-only — they see the poem, settings, and questions."
+        primary
+      />
+      <UrlRow
+        label="Teacher edition"
+        hint="For you. Poet bio, historical context, class agenda, per-question commentary."
+      />
+      <UrlRow
+        label="Editable"
+        hint="For you. Opens this lesson back into the builder so you can tweak it later."
+      />
     </div>
   );
 }
 
-function UrlRow({ label, url, primary }: { label: string; url: string; primary?: boolean }) {
+function UrlRow({ label, hint, primary }: { label: string; hint: string; primary?: boolean }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-      <span
-        className="chrome"
-        style={{ minWidth: '7rem', fontWeight: primary ? 600 : 400, color: primary ? 'var(--ink)' : 'var(--muted)' }}
-      >
-        {label}
-      </span>
-      <code
-        style={{
-          flex: 1,
-          fontFamily: 'ui-monospace, monospace',
-          fontSize: '0.8125rem',
-          color: 'var(--muted)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {url}
-      </code>
-      <button
-        type="button"
-        className={primary ? 'btn' : ''}
-        style={{
-          fontSize: '0.75rem',
-          padding: '0.25rem 0.625rem',
-          background: primary ? undefined : 'transparent',
-          border: primary ? undefined : '1px solid var(--rule)',
-          color: primary ? undefined : 'var(--muted)',
-          borderRadius: '0.25rem',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-        }}
-      >
-        Copy
-      </button>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          className="chrome"
+          style={{
+            fontWeight: primary ? 600 : 400,
+            color: primary ? 'var(--ink)' : 'var(--muted)',
+            marginBottom: '0.125rem',
+          }}
+        >
+          {label}
+        </div>
+        <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
+          {hint}
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
+        <button
+          type="button"
+          className={primary ? 'btn' : ''}
+          style={{
+            fontSize: '0.75rem',
+            padding: '0.375rem 0.75rem',
+            background: primary ? undefined : 'transparent',
+            border: primary ? undefined : '1px solid var(--rule)',
+            color: primary ? undefined : 'var(--muted)',
+            borderRadius: '0.25rem',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          Copy
+        </button>
+        <button
+          type="button"
+          style={{
+            fontSize: '0.75rem',
+            padding: '0.375rem 0.75rem',
+            background: 'transparent',
+            border: '1px solid var(--rule)',
+            color: 'var(--muted)',
+            borderRadius: '0.25rem',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          Open ↗
+        </button>
+      </div>
     </div>
   );
 }
@@ -538,8 +537,6 @@ function Adjust(props: {
   setShape: (s: 'in-class' | 'at-home') => void;
   length: string;
   setLength: (s: string) => void;
-  expirationDays: number;
-  setExpirationDays: (n: number) => void;
   questions: string[];
   setQuestions: (q: string[]) => void;
 }) {
@@ -558,6 +555,7 @@ function Adjust(props: {
       <div style={{ border: '1px solid var(--rule)', borderRadius: '0.5rem' }}>
         <AdjustRow
           label="Audience"
+          intro="Calibrates the vocabulary, theoretical depth, and length of the AI-generated questions and teacher edition."
           value={AUDIENCE_LABEL[props.audience]}
           editor={
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -571,6 +569,7 @@ function Adjust(props: {
         />
         <AdjustRow
           label="Shape"
+          intro="Whether students answer the questions during class together or write longer responses at home. Defaults shift to match."
           value={props.shape === 'at-home' ? 'With at-home component' : 'In class only'}
           editor={
             <div style={{ display: 'grid', gap: '0.5rem', gridTemplateColumns: '1fr 1fr' }}>
@@ -591,6 +590,7 @@ function Adjust(props: {
         />
         <AdjustRow
           label="Length"
+          intro="How long each student response is expected to be. Shown to students above the questions so they know what's expected."
           value={LENGTH_LABEL[props.length] ?? props.length}
           editor={
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -604,6 +604,7 @@ function Adjust(props: {
         />
         <AdjustRow
           label={`Questions (${props.questions.length})`}
+          intro="The discussion prompts students see. AI-generated for the chosen text + setting + audience; edit any of them, or write your own."
           value={
             props.questions[0]
               ? `“${truncate(props.questions[0], 60)}”`
@@ -665,24 +666,6 @@ function Adjust(props: {
           }
           last
         />
-        <AdjustRow
-          label="Expires in"
-          value={`${props.expirationDays} day${props.expirationDays === 1 ? '' : 's'}`}
-          editor={
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {[7, 14, 21, 30].map((d) => (
-                <Chip
-                  key={d}
-                  active={props.expirationDays === d}
-                  onClick={() => props.setExpirationDays(d)}
-                >
-                  {d} days
-                </Chip>
-              ))}
-            </div>
-          }
-          last
-        />
       </div>
     </section>
   );
@@ -690,11 +673,13 @@ function Adjust(props: {
 
 function AdjustRow({
   label,
+  intro,
   value,
   editor,
   last,
 }: {
   label: string;
+  intro: string;
   value: string;
   editor: React.ReactNode;
   last?: boolean;
@@ -705,18 +690,22 @@ function AdjustRow({
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
-          padding: '0.75rem 1rem',
+          alignItems: 'flex-start',
+          padding: '0.875rem 1rem',
           gap: '1rem',
         }}
       >
-        <span
-          className="chrome"
-          style={{ minWidth: '8rem', fontWeight: 500 }}
-        >
-          {label}
-        </span>
-        <span style={{ flex: 1, fontSize: '0.9375rem' }}>{value}</span>
+        <div style={{ minWidth: '8rem', flexShrink: 0 }}>
+          <div className="chrome" style={{ fontWeight: 500, marginBottom: '0.125rem' }}>
+            {label}
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--muted)', marginBottom: '0.25rem' }}>
+            {intro}
+          </div>
+          <div style={{ fontSize: '0.9375rem' }}>{value}</div>
+        </div>
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
@@ -728,6 +717,8 @@ function AdjustRow({
             fontFamily: 'inherit',
             fontSize: '0.8125rem',
             textDecoration: 'underline',
+            flexShrink: 0,
+            paddingTop: '0.125rem',
           }}
         >
           {open ? 'done' : 'change'}

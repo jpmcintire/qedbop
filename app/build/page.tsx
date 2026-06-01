@@ -13,12 +13,6 @@ import {
   getLengthOptions,
   DEFAULT_LENGTH_BY_AUDIENCE,
 } from '@/lib/poems';
-import {
-  defaultExpirationIso,
-  maxExpirationIso,
-  todayIso,
-  formatExpirationFriendly,
-} from '@/lib/expiration';
 import { fetchTopicOptions, fetchQuestions, fetchSingleQuestion } from '../actions';
 import {
   Step,
@@ -66,9 +60,6 @@ function BuilderPage() {
     const fromUrl = sp.getAll('q').length;
     return Math.min(5, fromUrl > 0 ? fromUrl : 4);
   });
-  const [expiration, setExpiration] = useState<string>(
-    () => sp.get('exp') ?? defaultExpirationIso()
-  );
   const [selectedLengths, setSelectedLengths] = useState<string[]>(() => {
     const fromUrl = sp.getAll('len');
     if (fromUrl.length > 0) return fromUrl;
@@ -173,9 +164,8 @@ function BuilderPage() {
       videoIds: picked,
       lengths: selectedLengths,
       questions: edited,
-      exp: expiration || null,
     });
-  }, [slug, picked, edited, audience, selectedLengths, expiration, mode]);
+  }, [slug, picked, edited, audience, selectedLengths, mode]);
 
   // ----- Handlers -----
 
@@ -338,9 +328,8 @@ function BuilderPage() {
     if (audience) params.set('audience', audience);
     selectedLengths.forEach((l) => params.append('len', l));
     edited.filter((q) => q.trim().length > 0).forEach((q) => params.append('q', q));
-    if (expiration) params.set('exp', expiration);
     return params.toString();
-  }, [poem, picked, audience, edited, expiration, selectedLengths]);
+  }, [poem, picked, audience, edited, selectedLengths]);
 
   const studentUrl = ready && poem ? `/a/${poem.slug}?${queryString}` : '';
   const editUrl = ready && poem ? `/build?mode=${mode}&slug=${poem.slug}&${queryString}` : '';
@@ -436,7 +425,6 @@ function BuilderPage() {
           onGenerate={handleBasicGenerate}
           studentUrl={studentUrl}
           teacherUrl={teacherUrl}
-          expiration={expiration}
         />
       ) : (
         <>
@@ -531,39 +519,6 @@ function BuilderPage() {
             </Step>
           )}
 
-          <Step n={9} title="Expiration">
-            <p
-              style={{
-                color: 'var(--muted)',
-                fontSize: '0.8125rem',
-                marginBottom: '0.75rem',
-                maxWidth: '38rem',
-              }}
-            >
-              Once this date passes, the student URL stops working (the page shows an
-              &ldquo;expired&rdquo; notice instead of the assignment). Max 30 days from today.
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'baseline' }}>
-              <input
-                type="date"
-                value={expiration}
-                onChange={(e) => setExpiration(e.target.value)}
-                min={todayIso()}
-                max={maxExpirationIso()}
-                style={{
-                  fontFamily: 'inherit',
-                  fontSize: '1rem',
-                  padding: '0.5rem 0.625rem',
-                  border: '1px solid var(--rule)',
-                  borderRadius: '0.375rem',
-                  background: 'transparent',
-                  color: 'var(--ink)',
-                }}
-              />
-              <span className="chrome">{formatExpirationFriendly(expiration)}</span>
-            </div>
-          </Step>
-
           <section className="hairline" style={{ paddingTop: '1.5rem', marginTop: '2rem' }}>
             {!ready ? (
               <>
@@ -576,13 +531,13 @@ function BuilderPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <UrlBlock
                   label="Share with students"
-                  description="Send this to students. They see the poem, the videos, and the questions you finalized — they cannot edit anything. Read-only until the expiration date."
+                  description="Send this to students. They see the poem, the videos, and the questions you finalized — they cannot edit anything."
                   relativeUrl={studentUrl}
                   accent
                 />
                 <UrlBlock
                   label="Teacher edition"
-                  description="A supplementary page for you with poet bio, historical context, a suggested class agenda, and per-question teaching commentary. Same expiration as the student URL. First load takes ~15s while Claude generates; cached after."
+                  description="A supplementary page for you with poet bio, historical context, a suggested class agenda, and per-question teaching commentary. First load takes ~15s while Claude generates; cached after."
                   relativeUrl={teacherUrl}
                 />
                 <UrlBlock

@@ -23,7 +23,6 @@ export type SavedLesson = {
   videoIds: string[];
   lengths: string[];
   questions: string[];
-  exp: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -120,20 +119,14 @@ export function useLessons(identity: Identity | null): SavedLesson[] {
 // ---- Demo seed ----
 
 // Seeded lessons make /me/lessons evaluable on first sign-in — without
-// them, a fresh identity lands on an empty page and you can't see the
-// Live/Expired badges or the per-row controls. Each identity is seeded
-// exactly once per browser (tracked by qedbop:seeded:<id>). Deletion
-// is permanent — we don't re-seed if a teacher wipes everything.
+// them, a fresh identity lands on an empty page. Each identity is
+// seeded exactly once per browser (tracked by qedbop:seeded:<id>).
+// Deletion is permanent — we don't re-seed if a teacher wipes
+// everything.
 //
 // All poem/video data comes from POEMS at runtime so seed entries are
 // always valid against the current catalog. Questions are taken from
 // each poem's starter questions array.
-
-function daysFromNow(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
-}
 
 type SeedSpec = {
   poemSlug: string;
@@ -142,7 +135,6 @@ type SeedSpec = {
   videoCount: number;
   lengths: string[];
   questionCount: number;
-  expOffsetDays: number;
 };
 
 const SEEDS: Record<Identity, SeedSpec[]> = {
@@ -154,7 +146,6 @@ const SEEDS: Record<Identity, SeedSpec[]> = {
       videoCount: 1,
       lengths: ['paragraph'],
       questionCount: 3,
-      expOffsetDays: 21,
     },
     {
       poemSlug: 'recuerdo',
@@ -163,7 +154,6 @@ const SEEDS: Record<Identity, SeedSpec[]> = {
       videoCount: 1,
       lengths: ['short-paragraph'],
       questionCount: 3,
-      expOffsetDays: 12,
     },
   ],
   dante: [
@@ -174,7 +164,6 @@ const SEEDS: Record<Identity, SeedSpec[]> = {
       videoCount: 1,
       lengths: ['short-essay'],
       questionCount: 4,
-      expOffsetDays: 28,
     },
     {
       poemSlug: 'ozymandias',
@@ -183,8 +172,6 @@ const SEEDS: Record<Identity, SeedSpec[]> = {
       videoCount: 1,
       lengths: ['paragraph'],
       questionCount: 3,
-      // Expired five days ago — demos the Expired badge in the list.
-      expOffsetDays: -5,
     },
   ],
 };
@@ -215,7 +202,6 @@ export function seedIfFirstTime(identity: Identity) {
       videoIds,
       lengths: spec.lengths,
       questions,
-      exp: daysFromNow(spec.expOffsetDays),
       createdAt: now,
       updatedAt: now,
     });
@@ -241,7 +227,6 @@ export function editableUrl(l: SavedLesson): string {
   for (const v of l.videoIds) params.append('v', v);
   for (const len of l.lengths) params.append('len', len);
   for (const q of l.questions) params.append('q', q);
-  if (l.exp) params.set('exp', l.exp);
   return `/build?${params.toString()}`;
 }
 
@@ -251,14 +236,5 @@ function buildUrl(base: string, l: SavedLesson): string {
   params.set('audience', l.audience);
   for (const len of l.lengths) params.append('len', len);
   for (const q of l.questions) params.append('q', q);
-  if (l.exp) params.set('exp', l.exp);
   return `${base}?${params.toString()}`;
-}
-
-export function isLive(l: SavedLesson): boolean {
-  if (!l.exp) return true;
-  // Same logic as lib/expiration.ts isExpired, inlined to keep this
-  // module client-only without importing the server helpers.
-  const today = new Date().toISOString().slice(0, 10);
-  return l.exp >= today;
 }

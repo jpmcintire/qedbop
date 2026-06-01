@@ -68,14 +68,6 @@ export function getShowcase(key: string): ShowcaseLesson | undefined {
   return SHOWCASE_LESSONS.find((s) => s.key === key);
 }
 
-// Default expiration for showcase URLs: 30 days from today. Far enough
-// out that a teacher can share the URL freely without expiration anxiety.
-function defaultExpiration(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 30);
-  return d.toISOString().slice(0, 10);
-}
-
 export type BuiltUrls = {
   studentUrls: Partial<Record<ShowcaseMode, string>>;
   teacherUrl: string;
@@ -95,8 +87,6 @@ export function buildShowcaseUrls(lesson: ShowcaseLesson): BuiltUrls {
       ? lesson.versionIds
       : poem.versions.slice(0, 2).map((v) => v.youtubeId);
 
-  const exp = defaultExpiration();
-
   const studentUrls: Partial<Record<ShowcaseMode, string>> = {};
   for (const mode of lesson.modes) {
     const { questionCount, length } = MODE_DEFAULTS[mode];
@@ -106,7 +96,6 @@ export function buildShowcaseUrls(lesson: ShowcaseLesson): BuiltUrls {
     params.set('audience', lesson.audience);
     params.append('len', length);
     for (const q of qs) params.append('q', q);
-    params.set('exp', exp);
     studentUrls[mode] = `/a/${poem.slug}?${params.toString()}`;
   }
 
@@ -120,7 +109,6 @@ export function buildShowcaseUrls(lesson: ShowcaseLesson): BuiltUrls {
   teacherParams.set('audience', lesson.audience);
   teacherParams.append('len', tlen);
   for (const q of tqs) teacherParams.append('q', q);
-  teacherParams.set('exp', exp);
   const teacherUrl = `/t/${poem.slug}?${teacherParams.toString()}`;
 
   return { studentUrls, teacherUrl, videoIds };

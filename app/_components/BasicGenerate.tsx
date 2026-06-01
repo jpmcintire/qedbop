@@ -1,5 +1,4 @@
 import { UrlBlock } from './UrlBlock';
-import { formatExpirationFriendly } from '@/lib/expiration';
 
 type Props = {
   ready: boolean;
@@ -9,7 +8,6 @@ type Props = {
   onGenerate: () => void;
   studentUrl: string;
   teacherUrl: string;
-  expiration: string;
 };
 
 // Basic mode's bottom section: a single button that generates and reveals
@@ -22,7 +20,6 @@ export function BasicGenerate({
   onGenerate,
   studentUrl,
   teacherUrl,
-  expiration,
 }: Props) {
   return (
     <section className="hairline" style={{ paddingTop: '1.5rem', marginTop: '1rem' }}>
@@ -52,7 +49,7 @@ export function BasicGenerate({
         <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <UrlBlock
             label="Share with students"
-            description={`Send this to students. Read-only, expires ${formatExpirationFriendly(expiration)}. To tweak topics, questions, or expiration date, switch to Custom mode at the top.`}
+            description="Send this to students. Read-only. To tweak topics or questions, switch to Custom mode at the top."
             relativeUrl={studentUrl}
             accent
           />
