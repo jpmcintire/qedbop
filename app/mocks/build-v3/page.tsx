@@ -317,8 +317,8 @@ function PickSetting({
               <div
                 style={{
                   flexShrink: 0,
-                  width: '192px',
-                  height: '108px',
+                  width: '144px',
+                  height: '81px',
                   borderRadius: '0.375rem',
                   overflow: 'hidden',
                   background: '#000',
