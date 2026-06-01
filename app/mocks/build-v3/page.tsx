@@ -28,6 +28,8 @@
 import { useMemo, useState } from 'react';
 import { POEMS } from '@/lib/poems';
 import { TopNav } from '@/app/_components/TopNav';
+import { Modal } from '@/app/_components/Modal';
+import { QrPanel } from '@/app/_components/QrPanel';
 
 type Screen = 'pick-text' | 'pick-setting' | 'lesson';
 
@@ -409,7 +411,13 @@ function Lesson({
       />
 
       <LessonHeader />
-      <UrlBlock />
+      <UrlBlock
+        poem={poem}
+        setting={setting}
+        audience={audience}
+        length={length}
+        questions={questions}
+      />
       <Adjust
         audience={audience}
         setAudience={setAudience}
@@ -442,7 +450,36 @@ function LessonHeader() {
   );
 }
 
-function UrlBlock() {
+function UrlBlock({
+  poem,
+  setting,
+  audience,
+  length,
+  questions,
+}: {
+  poem: (typeof POEMS)[number];
+  setting: (typeof POEMS)[number]['versions'][number];
+  audience: string;
+  length: string;
+  questions: string[];
+}) {
+  // Build real student/teacher/editable URLs from the mock state so
+  // Preview iframes and QR codes resolve to actual rendered pages
+  // (not placeholders). All three are same-origin so iframes work.
+  const queryString = useMemo(() => {
+    const p = new URLSearchParams();
+    p.append('v', setting.youtubeId);
+    p.set('audience', audience);
+    p.append('len', length);
+    questions.filter((q) => q.trim().length > 0).forEach((q) => p.append('q', q));
+    return p.toString();
+  }, [setting.youtubeId, audience, length, questions]);
+
+  const studentUrl = `/a/${poem.slug}?${queryString}`;
+  const teacherUrl = `/t/${poem.slug}?${queryString}`;
+  const editableUrl = `/build?mode=custom&slug=${poem.slug}&${queryString}`;
+  const qrCaption = `${poem.title} — ${AUDIENCE_LABEL[audience] ?? audience}`;
+
   return (
     <div
       style={{
@@ -458,78 +495,169 @@ function UrlBlock() {
       <UrlRow
         label="Student link"
         hint="Send to students. Read-only — they see the poem, settings, and questions."
+        url={studentUrl}
         primary
+        showPreview
+        showQr
+        qrCaption={qrCaption}
       />
       <UrlRow
         label="Teacher edition"
         hint="For you. Poet bio, historical context, class agenda, per-question commentary."
+        url={teacherUrl}
+        showPreview
       />
       <UrlRow
         label="Editable"
         hint="For you. Opens this lesson back into the builder so you can tweak it later."
+        url={editableUrl}
       />
     </div>
   );
 }
 
-function UrlRow({ label, hint, primary }: { label: string; hint: string; primary?: boolean }) {
+function UrlRow({
+  label,
+  hint,
+  url,
+  primary,
+  showPreview,
+  showQr,
+  qrCaption,
+}: {
+  label: string;
+  hint: string;
+  url: string;
+  primary?: boolean;
+  showPreview?: boolean;
+  showQr?: boolean;
+  qrCaption?: string;
+}) {
+  const [modal, setModal] = useState<'preview' | 'qr' | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function doCopy() {
+    try {
+      const full = window.location.origin + url;
+      await navigator.clipboard.writeText(full);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  }
+
+  const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}${url}` : url;
+
   return (
-    <div
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            className="chrome"
+            style={{
+              fontWeight: primary ? 600 : 400,
+              color: primary ? 'var(--ink)' : 'var(--muted)',
+              marginBottom: '0.125rem',
+            }}
+          >
+            {label}
+          </div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
+            {hint}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <RowButton onClick={doCopy} primary={primary}>
+            {copied ? 'Copied' : 'Copy'}
+          </RowButton>
+          {showPreview && (
+            <RowButton onClick={() => setModal('preview')}>Preview</RowButton>
+          )}
+          {showQr && (
+            <RowButton onClick={() => setModal('qr')}>QR</RowButton>
+          )}
+          <RowLink href={url}>Open ↗</RowLink>
+        </div>
+      </div>
+
+      <Modal
+        open={modal === 'preview'}
+        onClose={() => setModal(null)}
+        title={`Preview — ${label}`}
+        subtitle="What this URL renders for whoever opens it."
+        maxWidth="960px"
+      >
+        <iframe
+          src={url}
+          title={`Preview of ${label}`}
+          style={{ width: '100%', height: '70vh', border: 0, display: 'block' }}
+        />
+      </Modal>
+
+      <Modal
+        open={modal === 'qr'}
+        onClose={() => setModal(null)}
+        title="Show to class"
+        subtitle="Project this — students scan to open the assignment on their phones."
+        maxWidth="480px"
+      >
+        <QrPanel url={fullUrl} caption={qrCaption} />
+      </Modal>
+    </>
+  );
+}
+
+function RowButton({
+  children,
+  onClick,
+  primary,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  primary?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className={primary ? 'btn' : ''}
+      onClick={onClick}
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
+        fontSize: '0.75rem',
+        padding: '0.375rem 0.75rem',
+        background: primary ? undefined : 'transparent',
+        border: primary ? undefined : '1px solid var(--rule)',
+        color: primary ? undefined : 'var(--muted)',
+        borderRadius: '0.25rem',
+        cursor: 'pointer',
+        fontFamily: 'inherit',
       }}
     >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          className="chrome"
-          style={{
-            fontWeight: primary ? 600 : 400,
-            color: primary ? 'var(--ink)' : 'var(--muted)',
-            marginBottom: '0.125rem',
-          }}
-        >
-          {label}
-        </div>
-        <div style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-          {hint}
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
-        <button
-          type="button"
-          className={primary ? 'btn' : ''}
-          style={{
-            fontSize: '0.75rem',
-            padding: '0.375rem 0.75rem',
-            background: primary ? undefined : 'transparent',
-            border: primary ? undefined : '1px solid var(--rule)',
-            color: primary ? undefined : 'var(--muted)',
-            borderRadius: '0.25rem',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          Copy
-        </button>
-        <button
-          type="button"
-          style={{
-            fontSize: '0.75rem',
-            padding: '0.375rem 0.75rem',
-            background: 'transparent',
-            border: '1px solid var(--rule)',
-            color: 'var(--muted)',
-            borderRadius: '0.25rem',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          Open ↗
-        </button>
-      </div>
-    </div>
+      {children}
+    </button>
+  );
+}
+
+function RowLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      style={{
+        fontSize: '0.75rem',
+        padding: '0.375rem 0.75rem',
+        background: 'transparent',
+        border: '1px solid var(--rule)',
+        color: 'var(--muted)',
+        borderRadius: '0.25rem',
+        fontFamily: 'inherit',
+        textDecoration: 'none',
+        display: 'inline-block',
+      }}
+    >
+      {children}
+    </a>
   );
 }
 
